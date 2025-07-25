@@ -1,4 +1,4 @@
-import transporter from "../config/email.config";
+import { transporter, resend } from "../config/email.config";
 import { Create } from "../database/create";
 import { Fetch } from "../database/fetch";
 import { GenerateEmail } from "../helpers/utils.helper";
@@ -90,13 +90,26 @@ export class OTPModel {
   }
 
   async sendOTPViaMail(otp: string, email: string, reset?: boolean) {
-    // Envoyer l’email OTP
-    await transporter.sendMail({
-      from: process.env.SMTP_FROM,
-      to: email,
-      subject: "Code de vérification",
-      html: GenerateEmail(otp, reset),
-    });
+    try {
+      // Envoyer l’email OTP EN DEVVVVV
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM,
+        to: email,
+        subject: "Code de vérification",
+        html: GenerateEmail(otp, reset ?? false),
+      });
+
+      // Envoyer l’email OTP EN PRODDDDDDD
+      const data = await resend.emails.send({
+        from: "onboarding@resend.dev", // ou ton domaine validé ?? investia.org.com
+        to: [email],
+        subject: "Code de vérification",
+        html: GenerateEmail(otp, reset ?? false, true),
+      });
+      console.log("Email envoyé:", data);
+    } catch (error) {
+      console.error("Erreur:", error);
+    }
   }
 
   async getById(

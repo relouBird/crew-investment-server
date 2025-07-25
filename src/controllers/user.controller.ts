@@ -49,7 +49,7 @@ export const createUser = async (req: Request, res: Response) => {
 
     // Cree un OTP...
     const datas = await otp_class.create(
-      { email: data.email, otp: otp },
+      { email: data.email, otp: otp, state: "register" },
       (error) => {
         console.log(
           "otp-create-error =>",

@@ -1,8 +1,9 @@
 import { createTransport } from "nodemailer";
+import { Resend } from "resend";
 
-const transporter = createTransport({
+export const transporter = createTransport({
   host: process.env.SMTP_HOST,
   port: Number(process.env.SMTP_PORT),
 });
 
-export default transporter;
+export const resend = new Resend(process.env.RESEND_API_KEY);

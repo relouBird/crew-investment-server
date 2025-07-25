@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "serve": "concurrently -k -n \"Typescript,Node\" -p \"[{name}]\" -c \"blue,green\" \"tsc --watch\" \"nodemon dist/index.js\"",
-    "start": "tsc && node dist/index.js"
+    "start": "tsc && node dist/index.js",
+    "build": "tsc"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +15,7 @@
   "devDependencies": {
     "@types/node": "^24.0.1",
     "@types/nodemailer": "^6.4.17",
+    "@types/react": "^19.1.8",
     "concurrently": "^9.1.2",
     "nodemon": "^3.1.10",
     "typescript": "^5.8.3"
@@ -27,6 +29,7 @@
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
-    "nodemailer": "^7.0.5"
+    "nodemailer": "^7.0.5",
+    "resend": "^4.7.0"
   }
 }

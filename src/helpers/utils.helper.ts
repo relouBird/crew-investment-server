@@ -2,7 +2,7 @@ export function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-export function GenerateEmail(otp: string, reset?: boolean) {
+export function GenerateEmail(otp: string, reset: boolean, isOnline?: boolean) {
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -52,8 +52,8 @@ export function GenerateEmail(otp: string, reset?: boolean) {
         }
 
         .logo img {
-            width: 50px;
-            height: 50px;
+            width: 100%;
+            height: 100%;
             object-fit: contain;
         }
 
@@ -247,7 +247,7 @@ export function GenerateEmail(otp: string, reset?: boolean) {
         <!-- Header -->
         <div class="email-header">
             <div class="logo">
-                <img src="http://127.0.0.1:54321/storage/v1/object/public/investia//logo.png" alt="Logo">
+                <img src="${isOnline ? "https://anoybggdqpxdfcfhxfsg.supabase.co/storage/v1/object/public/investia//logo.png" : "http://127.0.0.1:54321/storage/v1/object/public/investia//logo.png"}" alt="Logo">
             </div>
             <h1>Code de vérification</h1>
             <p>Authentification sécurisée</p>
