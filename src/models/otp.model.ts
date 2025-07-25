@@ -92,12 +92,12 @@ export class OTPModel {
   async sendOTPViaMail(otp: string, email: string, reset?: boolean) {
     try {
       // Envoyer l’email OTP EN DEVVVVV
-      await transporter.sendMail({
-        from: process.env.SMTP_FROM,
-        to: email,
-        subject: "Code de vérification",
-        html: GenerateEmail(otp, reset ?? false),
-      });
+      // await transporter.sendMail({
+      //   from: process.env.SMTP_FROM,
+      //   to: email,
+      //   subject: "Code de vérification",
+      //   html: GenerateEmail(otp, reset ?? false),
+      // });
 
       // Envoyer l’email OTP EN PRODDDDDDD
       const data = await resend.emails.send({
