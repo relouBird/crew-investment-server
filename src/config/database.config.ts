@@ -5,8 +5,8 @@ dotenv.config();
 
 // Create a single supabase client for interacting with your database
 const SupabaseConfig = createClient(
-  String(process.env.SUPABASE_URL_CLI),
-  String(process.env.SUPABASE_SERVICE_ROLE_CLI),
+  String(process.env.SUPABASE_URL),
+  String(process.env.SUPABASE_SERVICE_ROLE),
   {
     auth: {
       autoRefreshToken: false,
