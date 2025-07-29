@@ -4,6 +4,7 @@ import { UserRegisterCredentials } from "../types/user.type";
 import { generateOTP } from "../helpers/utils.helper";
 import { OTPModel } from "../models/otp.model";
 import { UserVerificationCredentials } from "../types";
+import { User } from "@supabase/supabase-js";
 
 // fonction qui est appelé lors de la requete et permettant de recuperer tout les users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -260,16 +261,20 @@ export const sendOTP = async (req: Request, res: Response) => {
   let isError = false;
   let errorMessage = "";
 
-  const dataUser = await user.getByEmail(data.email, (error) => {
-    console.log(
-      "user-get-error =>",
-      error?.message,
-      " on email : ",
-      data.email
-    );
-    errorMessage = error?.message ?? "";
-    isError = true;
-  });
+  console.log("otp-reset-password =>", data);
+  let dataUser: User | null = null;
+  if (data) {
+    dataUser = await user.getByEmail(data.email, (error) => {
+      console.log(
+        "user-get-error =>",
+        error?.message,
+        " on email : ",
+        data.email
+      );
+      errorMessage = error?.message ?? "";
+      isError = true;
+    });
+  }
 
   if (!isError && dataUser) {
     const otp = generateOTP();
@@ -289,6 +294,7 @@ export const sendOTP = async (req: Request, res: Response) => {
     );
     // Envoyer l'otp via Email...
     await otp_class.sendOTPViaMail(otp, data.email, true);
+    console.log("Email envoyé avec succès...");
 
     setTimeout(async () => {
       res.status(201).json({
@@ -299,7 +305,7 @@ export const sendOTP = async (req: Request, res: Response) => {
     }, 1000);
   } else if (!isError && !dataUser) {
     setTimeout(async () => {
-      res.status(500).json({
+      res.status(404).json({
         message: "Erreur lors de la recuperation de l'user...",
         details: "This user do not exists... Retry",
       });
@@ -417,7 +423,7 @@ export const loginUser = async (req: Request, res: Response) => {
       }, 1000);
     }
   } else {
-    res.status(500).json({
+    res.status(404).json({
       message: "Erreur lors de la connexion de l'utilisateur...",
       details: errorMessage,
     });

@@ -15,4 +15,6 @@ const SupabaseConfig = createClient(
   }
 );
 
+""
+
 export default SupabaseConfig;
