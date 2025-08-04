@@ -18,3 +18,8 @@ export interface UserRegisterCredentials extends Credentials {
   password_confirmation: string;
 }
 
+export interface changeUserPasswordType {
+  password: string;
+  new_password: string;
+  confirm_new_password: string;
+}

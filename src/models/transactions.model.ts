@@ -1,6 +1,6 @@
 import { PostgrestError } from "@supabase/supabase-js";
 import { gmail_transporter, transporter } from "../config/email.config";
-import { collectFromUserAccount } from "../config/wallet.config";
+import { checkFromTransactionId } from "../config/wallet.config";
 import { Create } from "../database/create";
 import { Fetch } from "../database/fetch";
 import { Update } from "../database/update";
@@ -8,10 +8,15 @@ import {
   GenerateFailEmail,
   GenerateThanksEmail,
 } from "../helpers/utils.helper";
-import { UserVerificationCredentials } from "../types";
-import { ErrorHandler } from "../types/database.type";
+import {
+  ErrorHandler,
+  MesombErrorHandler,
+  MesombError,
+} from "../types/database.type";
 import {
   RefillWalletType,
+  TransactionState,
+  TransactionType,
   UserWalletTransaction,
   UserWalletType,
 } from "../types/wallet.type";
@@ -62,13 +67,13 @@ export class TransactionModel {
   }
 
   async update(
-    walletForm: UserWalletTransaction,
+    transactionForm: UserWalletTransaction,
     errorHandler?: ErrorHandler
   ): Promise<UserWalletTransaction | null> {
     let isError: boolean = false;
     const data = (await this.updateClass.UpdateById(
-      String(walletForm.id),
-      walletForm,
+      String(transactionForm.id),
+      transactionForm,
       (error) => {
         errorHandler && errorHandler(error);
         isError = true;
@@ -93,7 +98,7 @@ export class TransactionModel {
         from: "noreply@investia.com",
         to: email,
         subject: "Compte Rechargé avec Succès...",
-        html: GenerateThanksEmail(funds_added, transaction_id)
+        html: GenerateThanksEmail(funds_added, transaction_id),
       });
 
       //   // Envoyer l’email OTP EN PROD AVEC GMAIL
@@ -120,18 +125,35 @@ export class TransactionModel {
         html: GenerateFailEmail(transaction_id, false),
       });
 
-        // // Envoyer l’email OTP EN DEVVVVV
-        // const data = await gmail_transporter.sendMail({
-        //   from: "noreply@investia.com",
-        //   to: email,
-        //   subject: "Echec de la transaction...",
-        //   html: GenerateFailEmail(transaction_id, true),
-        // });
+      // // Envoyer l’email OTP EN DEVVVVV
+      // const data = await gmail_transporter.sendMail({
+      //   from: "noreply@investia.com",
+      //   to: email,
+      //   subject: "Echec de la transaction...",
+      //   html: GenerateFailEmail(transaction_id, true),
+      // });
 
       //   console.log("Email envoyé:", data);
     } catch (error) {
       console.error("Erreur:", error);
     }
+  }
+
+  async checkTransactionStateMention(
+    transaction_id_list: string[],
+    errorHandler?: MesombErrorHandler
+  ) {
+    let isError: boolean = false;
+    const data = await checkFromTransactionId(transaction_id_list, (error) => {
+      isError = true;
+      errorHandler && errorHandler(error as MesombError);
+      console.log("transaction-check-error =>", error?.detail);
+    });
+
+    if (data) {
+      return data as TransactionType[];
+    }
+    return null;
   }
 
   async getById(
@@ -148,6 +170,28 @@ export class TransactionModel {
     if (isError) {
       return null;
     }
+    return data;
+  }
+
+  async getManyByState(
+    state: TransactionState,
+    errorHandler?: ErrorHandler
+  ): Promise<UserWalletTransaction[] | null> {
+    let isError: boolean = false;
+    const data = (await this.fetch.GetAllByParameter(
+      "status",
+      state,
+      (error) => {
+        errorHandler && errorHandler(error);
+        isError = true;
+        console.log(`${this.name}-error => ${error}`);
+      }
+    )) as UserWalletTransaction[];
+
+    if (isError) {
+      return null;
+    }
+
     return data;
   }
 

@@ -1,10 +1,13 @@
 import { UserModel } from "../models/user.model";
 import { Request, Response } from "express";
-import { UserRegisterCredentials } from "../types/user.type";
+import {
+  changeUserPasswordType,
+  UserRegisterCredentials,
+} from "../types/user.type";
 import { generateOTP } from "../helpers/utils.helper";
 import { OTPModel } from "../models/otp.model";
 import { UserVerificationCredentials } from "../types";
-import { User } from "@supabase/supabase-js";
+import { User, UserMetadata } from "@supabase/supabase-js";
 
 // fonction qui est appelé lors de la requete et permettant de recuperer tout les users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -423,10 +426,12 @@ export const loginUser = async (req: Request, res: Response) => {
       }, 1000);
     }
   } else {
-    res.status(404).json({
-      message: "Erreur lors de la connexion de l'utilisateur...",
-      details: errorMessage,
-    });
+    setTimeout(async () => {
+      res.status(404).json({
+        message: "Erreur lors de la connexion de l'utilisateur...",
+        details: errorMessage,
+      });
+    }, 1000);
   }
 };
 
@@ -457,5 +462,194 @@ export const getUserByAccessToken = async (req: Request, res: Response) => {
       message: "Erreur lors de la connexion de l'utilisateur...",
       details: errorMessage,
     });
+  }
+};
+
+/*
+  Cette partie concerne la partie connecté de l'utilisateur
+*/
+
+// fonction qui permet de recuperer l'utilisateur...
+export const getUser = async (req: Request, res: Response) => {
+  const user = (req as any).user as User;
+
+  if (!user) {
+    res.status(500).send({
+      message: "Erreur lors de la récupération de l'user...",
+      error: "Something Where Wrong...",
+    });
+  } else {
+    res.status(200).json({
+      message: "Account Infos getted...",
+      email: user.email,
+      data: user.user_metadata,
+    });
+  }
+};
+
+// fonction qui permet de mettre à jour les infos des utilisateurs...
+export const updateUserInfos = async (req: Request, res: Response) => {
+  const model_user = new UserModel();
+  const user = (req as any).user as User;
+  const reqBody = req.body as UserMetadata;
+
+  console.log("user-data-to-update =>", reqBody);
+
+  if (!user) {
+    setTimeout(async () => {
+      res.status(404).send({
+        message: "Erreur lors de la récupération de l'user...",
+        error: "Something Where Wrong...",
+      });
+    }, 1000);
+  } else if (user.email != reqBody.email) {
+    setTimeout(async () => {
+      res.status(404).send({
+        message: "Erreur lors de la modification d'email...",
+        error: "Not Now wait for it soon.",
+      });
+    }, 1000);
+  } else {
+    let isError: boolean = false;
+    let errorMessage: string = "";
+    const datas = await model_user.update(reqBody, (error) => {
+      console.log("error-update-user =>", error?.message);
+      isError = true;
+      errorMessage = error?.message ?? "";
+    });
+
+    if (!isError && datas) {
+      setTimeout(() => {
+        res.status(201).json({
+          message: "Account Infos getted...",
+          email: datas.email,
+          data: datas.user_metadata,
+        });
+      }, 1000);
+    } else {
+      setTimeout(async () => {
+        res.status(404).send({
+          message: "Erreur lors de la modification d'email...",
+          error: errorMessage,
+        });
+      }, 1000);
+    }
+  }
+};
+
+// fonction qui permet de changer le mot de passe d'un utilisateur...
+export const changeUserPassword = async (req: Request, res: Response) => {
+  const model_user = new UserModel();
+  const user = (req as any).user as User;
+  const reqBody = req.body as changeUserPasswordType;
+  // gestion des erreurs
+  let isError: boolean = false;
+  let errorMessage: string = "";
+
+  // On va d'abord connecter l'utilisateur pour voir s'il a mit le bon mot de passe...
+  const datas = await model_user.signIn(
+    { email: user.email ?? "", password: reqBody.password },
+    (error) => {
+      console.log(
+        "user-signin-error =>",
+        error?.message,
+        "on email :",
+        user.email
+      );
+      errorMessage = error?.message ?? "";
+      isError = true;
+    }
+  );
+
+  console.log("password-to-change =>", { email: user.email, ...reqBody });
+
+  if (!user) {
+    setTimeout(async () => {
+      res.status(404).send({
+        message: "Erreur lors de la récupération de l'user...",
+        error: "Something Where Wrong...",
+      });
+    }, 1000);
+  } else if (user && isError) {
+    setTimeout(async () => {
+      res.status(404).send({
+        message: "Erreur lors de la récupération de l'user...",
+        error: "You didn't enter the correct password",
+      });
+    }, 1000);
+  } else {
+    if (reqBody.new_password === reqBody.confirm_new_password) {
+      const user_getted = await model_user.changePassword(
+        {
+          email: user.email ?? "",
+          password: reqBody.new_password,
+          password_confirmation: "",
+        },
+        (error) => {
+          console.log(
+            "user-change-password-error =>",
+            error?.message,
+            "on email :",
+            user.email
+          );
+          errorMessage = error?.message ?? "";
+          isError = true;
+        }
+      );
+      setTimeout(async () => {
+        console.log("Password have been changed...");
+        res.status(200).json({
+          message: "Account Infos change password updated...",
+          data: user_getted?.user_metadata,
+        });
+      }, 2000);
+    } else {
+      setTimeout(async () => {
+        res.status(403).json({
+          message: "Not corresponding...",
+          error: "Not corresponding.",
+        });
+      }, 3000);
+    }
+  }
+};
+
+// fonction qui permet de supprimer le compte d'un utilisateur...
+export const deleteAccount = async (req: Request, res: Response) => {
+  const user = (req as any).user as User;
+  const model_user = new UserModel();
+
+  if (!user) {
+    setTimeout(() => {
+      res.status(500).send({
+        message: "Erreur lors de la récupération de l'user...",
+        error: "Something Where Wrong...",
+      });
+    }, 1000);
+  } else {
+    let isError: boolean = false;
+    let errorMessage = "";
+    const datas = await model_user.delete(user.email ?? "", (error) => {
+      isError = true;
+      errorMessage = error?.message ?? "";
+      console.log("delete-user-error =>", error?.message);
+    });
+
+    if (!isError && datas) {
+      setTimeout(() => {
+        res.status(200).json({
+          message: "Account Infos getted...",
+          email: datas.email,
+          data: datas.user_metadata,
+        });
+      }, 3000);
+    } else {
+      setTimeout(() => {
+        res.status(404).json({
+          message: "Error when delete user...",
+          error: errorMessage,
+        });
+      }, 3000);
+    }
   }
 };

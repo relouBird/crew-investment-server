@@ -1,12 +1,17 @@
 import { PostgrestError, User } from "@supabase/supabase-js";
 import {
   collectFromUserAccount,
+  refundToUserAccountFromTransactionId,
   sendFundsToUserAccount,
 } from "../config/wallet.config";
 import { Create } from "../database/create";
 import { Fetch } from "../database/fetch";
 import { Update } from "../database/update";
-import { ErrorHandler } from "../types/database.type";
+import {
+  ErrorHandler,
+  MesombError,
+  MesombErrorHandler,
+} from "../types/database.type";
 import { RefillWalletType, UserWalletType } from "../types/wallet.type";
 
 export class WalletModel {
@@ -76,7 +81,7 @@ export class WalletModel {
   async refill(
     transaction_id: string,
     toRefill: RefillWalletType,
-    errorHandler?: ErrorHandler
+    errorHandler?: MesombErrorHandler
   ) {
     try {
       const data = await collectFromUserAccount(
@@ -88,14 +93,14 @@ export class WalletModel {
 
       return data;
     } catch (error) {
-      errorHandler && errorHandler(error as PostgrestError);
+      errorHandler && errorHandler(error as MesombError);
     }
   }
 
   async withdraw(
     transaction_id: string,
     toRefill: RefillWalletType,
-    errorHandler?: ErrorHandler
+    errorHandler?: MesombErrorHandler
   ) {
     try {
       const data = await sendFundsToUserAccount(
@@ -107,10 +112,19 @@ export class WalletModel {
 
       return data;
     } catch (error) {
-      errorHandler && errorHandler(error as PostgrestError);
+      errorHandler && errorHandler(error as MesombError);
     }
   }
 
+  async refund(transaction_id: string, errorHandler?: MesombErrorHandler) {
+    try {
+      const data = await refundToUserAccountFromTransactionId(transaction_id);
+
+      return data;
+    } catch (error) {
+      errorHandler && errorHandler(error as MesombError);
+    }
+  }
   async finalizeRefill(
     toRefill: RefillWalletType,
     errorHandler?: ErrorHandler
@@ -120,8 +134,6 @@ export class WalletModel {
     toRefill: RefillWalletType,
     errorHandler?: ErrorHandler
   ) {}
-
-  
 
   async getById(
     id: string,

@@ -35,7 +35,11 @@ export interface RefillWalletType {
 export interface UserWalletTransaction {
   id: number;
   transaction_id: string;
+  creator_id: string;
+  amount: number;
   type: "deposit" | "withdrawal" | "transfer";
   status: "done" | "pending" | "failed";
   created_at: string | Date;
 }
+
+export type TransactionState = "done" | "pending" | "failed";

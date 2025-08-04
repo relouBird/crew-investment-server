@@ -3,7 +3,11 @@ import {
   RandomGenerator,
   TransactionResponse,
 } from "@hachther/mesomb";
-import { User } from "@supabase/supabase-js";
+import {
+  ErrorHandler,
+  MesombErrorHandler,
+  MesombError,
+} from "../types/database.type";
 import { PAYMENT_METHOD, TransactionType } from "../types/wallet.type";
 
 const applicationKey = process.env.MESOMB_APPLICATION_KEY || "";
@@ -88,14 +92,21 @@ const refundToUserAccountFromTransactionId = async (
 
 /**
  * Cette fonction permet de controler la transaction d'un utilisateur...
- * @param {string} transaction_id C'est l'id  de la transaction
- * @returns {Promise<TransactionType>}
+ * @param {string[]} transaction_id_list C'est l'id  de la transaction
+ * @returns {Promise<TransactionType[] | undefined>}
  */
 const checkFromTransactionId = async (
-  transaction_id: string
-): Promise<TransactionType> => {
-  const transaction = await client_payment.checkTransactions([transaction_id]);
-  return transaction[0] as TransactionType;
+  transaction_id_list: string[],
+  errorHandler?: MesombErrorHandler
+): Promise<TransactionType[] | undefined> => {
+  try {
+    const transaction =
+      await client_payment.checkTransactions(transaction_id_list);
+    return transaction as TransactionType[];
+  } catch (error) {
+    errorHandler && errorHandler(error as MesombError);
+    return undefined;
+  }
 };
 
 /**
