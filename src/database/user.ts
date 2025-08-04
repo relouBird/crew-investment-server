@@ -1,4 +1,4 @@
-import { GoTrueAdminApi, User } from "@supabase/supabase-js";
+import { GoTrueAdminApi, User, UserMetadata } from "@supabase/supabase-js";
 import SupabaseConfig from "../config/database.config";
 import { AuthErrorHandler } from "../types/database.type";
 
@@ -102,9 +102,27 @@ export class DatabaseUser {
     credentials: UserRegisterCredentials,
     errorHandler?: AuthErrorHandler
   ): Promise<null | AuthData> {
-    const { data, error } = await this.auth.signUp({
-      email: credentials.email ?? "default@gmail.com",
+    const rand = Math.round(Math.random() * 100000);
+    const { data, error } = await this.auth_admin.createUser({
+      email: credentials.email,
       password: credentials.password,
+      user_metadata: {
+        firstName: "User",
+        lastName: rand,
+        generatedId: "USR" + rand,
+        email: credentials.email,
+        phone: "",
+        country: "",
+        notifications: {
+          email: true,
+          push: true,
+          betResults: true,
+          promotions: false,
+        },
+        twoFactorEnabled: false,
+      },
+      email_confirm: true,
+      phone_confirm: true,
     });
 
     if (error) {
@@ -185,6 +203,62 @@ export class DatabaseUser {
         password: credentials.password,
       }
     );
+    if (error) {
+      console.log(
+        "There was an error updating your password =>",
+        error.message
+      );
+      errorHandler && errorHandler(error);
+      return null;
+    }
+
+    console.log("Password updated successfully =>", data);
+    return data.user;
+  }
+
+  /**
+   * Cette Fonction permet de mettre à jour les données d'un utilisateur
+   * @param {UserMetadata} user_data - Les meta données de l'utilisateur....
+   * @param {AuthErrorHandler} errorHandler  - ceci est la fonction qui prend en parametre l'erreur et qui permet de la gerer
+   * @returns {Promise<null | User>}
+   */
+  async updateUserData(
+    user_data: UserMetadata,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    let user = await this.getUser(user_data.email as string);
+    const { data, error } = await this.auth_admin.updateUserById(
+      user?.id ?? "",
+      {
+        phone: user_data.phone && user_data.phone != "" && user_data.phone,
+        user_metadata: { ...user_data },
+      }
+    );
+    if (error) {
+      console.log(
+        "There was an error updating your password =>",
+        error.message
+      );
+      errorHandler && errorHandler(error);
+      return null;
+    }
+
+    console.log("Password updated successfully =>", data);
+    return data.user;
+  }
+
+  /**
+   * Cette Fonction permet de mettre à jour les données d'un utilisateur
+   * @param {string} email - L'email de l'utilisateur....
+   * @param {AuthErrorHandler} errorHandler  - ceci est la fonction qui prend en parametre l'erreur et qui permet de la gerer
+   * @returns {Promise<null | User>}
+   */
+  async delete(
+    email: string,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    let user = await this.getUser(email);
+    const { data, error } = await this.auth_admin.deleteUser(user?.id ?? "");
     if (error) {
       console.log(
         "There was an error updating your password =>",

@@ -1,4 +1,4 @@
-import { User } from "@supabase/supabase-js";
+import { User, UserMetadata } from "@supabase/supabase-js";
 import { Fetch } from "../database/fetch";
 import { DatabaseUser } from "../database/user";
 import { AuthErrorHandler, ErrorHandler } from "../types/database.type";
@@ -41,6 +41,42 @@ export class UserModel {
   ): Promise<null | AuthData> {
     let isError = false;
     const data = this.user.create(credentials, (error) => {
+      errorHandler && errorHandler(error);
+      isError = true;
+    });
+    if (!isError) {
+      return data;
+    }
+    return null;
+  }
+
+  /*
+  Lire la documentation sur la base de la base de données User
+  */
+  async update(
+    user_data: UserMetadata,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    let isError = false;
+    const data = this.user.updateUserData(user_data, (error) => {
+      errorHandler && errorHandler(error);
+      isError = true;
+    });
+    if (!isError) {
+      return data;
+    }
+    return null;
+  }
+
+  /*
+  Lire la documentation sur la base de la base de données User
+  */
+  async delete(
+    email: string,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    let isError = false;
+    const data = this.user.delete(email, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
     });
