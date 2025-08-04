@@ -99,13 +99,13 @@ export class OTPModel {
       //  html: GenerateEmail(otp, reset ?? false),
       // });
 
-      // // Envoyer l’email OTP EN DEVVVVV
-      // const data = await gmail_transporter.sendMail({
-      //   from: "noreply@investia.com",
-      //   to: email,
-      //   subject: "Code de vérification",
-      //   html: GenerateEmail(otp, reset ?? false, true),
-      // });
+      // Envoyer l’email OTP EN DEVVVVV
+      const data = await gmail_transporter.sendMail({
+        from: "noreply@investia.com",
+        to: email,
+        subject: "Code de vérification",
+        html: GenerateEmail(otp, reset ?? false, true),
+      });
 
       // // Envoyer l’email OTP EN PRODDDDDDD
       // const data = await resend.emails.send({

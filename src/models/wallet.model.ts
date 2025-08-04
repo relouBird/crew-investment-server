@@ -125,15 +125,6 @@ export class WalletModel {
       errorHandler && errorHandler(error as MesombError);
     }
   }
-  async finalizeRefill(
-    toRefill: RefillWalletType,
-    errorHandler?: ErrorHandler
-  ) {}
-
-  async finalizeWithdraw(
-    toRefill: RefillWalletType,
-    errorHandler?: ErrorHandler
-  ) {}
 
   async getById(
     id: string,

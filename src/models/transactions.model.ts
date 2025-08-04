@@ -1,4 +1,3 @@
-import { PostgrestError } from "@supabase/supabase-js";
 import { gmail_transporter, transporter } from "../config/email.config";
 import { checkFromTransactionId } from "../config/wallet.config";
 import { Create } from "../database/create";
@@ -93,21 +92,21 @@ export class TransactionModel {
     transaction_id: string
   ) {
     try {
-      // Envoyer l’email OTP EN DEVVVVV
-      await transporter.sendMail({
-        from: "noreply@investia.com",
-        to: email,
-        subject: "Compte Rechargé avec Succès...",
-        html: GenerateThanksEmail(funds_added, transaction_id),
-      });
+      // // Envoyer l’email OTP EN DEVVVVV
+      // await transporter.sendMail({
+      //   from: "noreply@investia.com",
+      //   to: email,
+      //   subject: "Compte Rechargé avec Succès...",
+      //   html: GenerateThanksEmail(funds_added, transaction_id),
+      // });
 
-      //   // Envoyer l’email OTP EN PROD AVEC GMAIL
-      //   const data = await gmail_transporter.sendMail({
-      //     from: "noreply@investia.com",
-      //     to: email,
-      //     subject: "Compte Rechargé avec Succès...",
-      //     html: GenerateThanksEmail(funds_added, transaction_id, true),
-      //   });
+      // // Envoyer l’email OTP EN PROD AVEC GMAIL
+      // const data = await gmail_transporter.sendMail({
+      //   from: "noreply@investia.com",
+      //   to: email,
+      //   subject: "Compte Rechargé avec Succès...",
+      //   html: GenerateThanksEmail(funds_added, transaction_id, true),
+      // });
 
       //   console.log("Email envoyé:", data);
     } catch (error) {
