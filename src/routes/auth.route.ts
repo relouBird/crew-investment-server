@@ -5,6 +5,8 @@ const AuthRouter = express.Router();
 
 AuthRouter.post("/register", UserController.createUser);
 
+AuthRouter.post("/register/:id", UserController.createParrainedUser);
+
 AuthRouter.post("/login", UserController.loginUser);
 
 AuthRouter.post("/verify-otp", UserController.verifyOTPUser);

@@ -8,6 +8,7 @@ import { generateOTP } from "../helpers/utils.helper";
 import { OTPModel } from "../models/otp.model";
 import { UserVerificationCredentials } from "../types";
 import { User, UserMetadata } from "@supabase/supabase-js";
+import { WalletModel } from "../models/wallet.model";
 
 // fonction qui est appelé lors de la requete et permettant de recuperer tout les users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -31,13 +32,14 @@ export const getAllUsers = async (req: Request, res: Response) => {
 export const createUser = async (req: Request, res: Response) => {
   const user = new UserModel();
   const otp_class = new OTPModel();
+  const wallet_model = new WalletModel();
   const data = req.body as UserRegisterCredentials;
   let isError = false;
   let errorMessage = "";
 
   console.log(`user-to-create =>`, data);
 
-  await user.create(data, (error) => {
+  const userCreated = await user.create(data, (error) => {
     isError = true;
     console.log(
       "user-register-error =>",
@@ -63,6 +65,94 @@ export const createUser = async (req: Request, res: Response) => {
         );
         errorMessage = error?.message ?? "";
         isError = true;
+      }
+    );
+
+    const wallet_datas = await wallet_model.create(
+      { uid: userCreated?.user.id },
+      (error) => {
+        isError = true;
+        console.log(
+          "wallet-create-error =>",
+          error?.message,
+          " on email :",
+          userCreated?.user.email
+        );
+        errorMessage = error?.message ?? "";
+      }
+    );
+
+    // Envoyer l'otp via Email...
+    await otp_class.sendOTPViaMail(otp, data.email);
+
+    setTimeout(async () => {
+      res.status(201).json({
+        message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
+        data: data,
+        verify: datas?.state == "register",
+      });
+    }, 1000);
+  } else {
+    setTimeout(async () => {
+      res.status(500).json({
+        message: "Erreur lors de la creation...",
+        details: errorMessage,
+      });
+    }, 1000);
+  }
+};
+
+// fonction qui est appelé lors de la requete et permettant de creer un nouvel utilisateur
+export const createParrainedUser = async (req: Request, res: Response) => {
+  const user = new UserModel();
+  const otp_class = new OTPModel();
+  const wallet_model = new WalletModel();
+  const data = req.body as UserRegisterCredentials;
+  let isError = false;
+  let errorMessage = "";
+
+  console.log(`user-to-create =>`, data);
+
+  const userCreated = await user.create(data, (error) => {
+    isError = true;
+    console.log(
+      "user-register-error =>",
+      error?.message,
+      " on email :",
+      data.email
+    );
+    errorMessage = error?.message ?? "";
+  });
+
+  if (!isError) {
+    const otp = generateOTP();
+
+    // Cree un OTP...
+    const datas = await otp_class.create(
+      { email: data.email, otp: otp, state: "register" },
+      (error) => {
+        console.log(
+          "otp-create-error =>",
+          error?.message,
+          " on email : ",
+          data.email
+        );
+        errorMessage = error?.message ?? "";
+        isError = true;
+      }
+    );
+
+    const wallet_datas = await wallet_model.create(
+      { uid: userCreated?.user.id },
+      (error) => {
+        isError = true;
+        console.log(
+          "wallet-create-error =>",
+          error?.message,
+          " on email :",
+          userCreated?.user.email
+        );
+        errorMessage = error?.message ?? "";
       }
     );
 

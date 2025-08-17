@@ -12,8 +12,77 @@ import { TransactionModel } from "../models/transactions.model";
 // fonction qui est appelé afin de recuperer toutes les informations par rapport au compte d'un utilisateur..
 export const getAccountDetails = async (req: Request, res: Response) => {
   const transactions = new TransactionModel();
+  const wallet = new WalletModel();
   let isError = false;
   let errorMessage = "";
+  const user = (req as any).user as User;
+
+  const datas = await wallet.getByUid(user.id, (error) => {
+    console.log("get-wallet-error =>", error?.message);
+    isError = true;
+    errorMessage = error?.message ?? "";
+  });
+
+  if (!isError && datas) {
+    const transaction_datas = await transactions.getManyByUuid(
+      user.id,
+      (error) => {
+        console.log("get-transactions-error =>", error?.message);
+        isError = true;
+        errorMessage = error?.message ?? "";
+      }
+    );
+    if (!isError && transaction_datas) {
+      let deposit: number = 0;
+      let withdraw: number = 0;
+      let growth: number = 0;
+      // calculs la somme de tout les depots...
+      transaction_datas
+        .filter(
+          (transaction) =>
+            transaction.type == "deposit" && transaction.status == "done"
+        )
+        .forEach((trans) => {
+          deposit += trans.amount;
+        });
+
+      // calcul la somme de tout les retraits...
+      transaction_datas
+        .filter(
+          (transaction) =>
+            transaction.type == "withdrawal" && transaction.status == "done"
+        )
+        .forEach((trans) => {
+          withdraw += trans.amount;
+        });
+
+      // calcul l'évolution...
+      growth =
+        deposit != 0 ? ((datas.funds + withdraw - deposit) / deposit) * 100 : 0;
+
+      // Send...
+      setTimeout(async () => {
+        res.status(200).json({
+          message: "User wallet getted...",
+          data: { ...datas, growth, total_wins: 0 },
+        });
+      }, 1000);
+    } else {
+      setTimeout(async () => {
+        res.status(404).json({
+          message: "Not Transactions Found...",
+          data: errorMessage,
+        });
+      }, 1000);
+    }
+  } else {
+    setTimeout(async () => {
+      res.status(404).json({
+        message: "Not Wallet Found...",
+        data: errorMessage,
+      });
+    }, 1000);
+  }
 };
 
 // fonction qui est appelé lors de la requete et permettant de creer un nouvel utilisateur
@@ -74,28 +143,78 @@ export const refillAccount = async (req: Request, res: Response) => {
     );
   }
 
-  if (!isError && reqBody && transaction_init) {
-    wallet.refill(
-      transaction_init.transaction_id ?? "111-111-111",
-      reqBody,
-      (error) => {
-        isError = true;
-        console.log(
-          "wallet-refill-error =>",
-          error?.detail,
-          " on email :",
-          user.email
-        );
-        errorMessage = error?.detail ?? "";
-      }
-    );
+  if (!isError && reqBody && transaction_init && data) {
+    wallet
+      .refill(
+        transaction_init.transaction_id ?? "111-111-111",
+        reqBody,
+        (error) => {
+          isError = true;
+          console.log(
+            "wallet-refill-error =>",
+            error?.detail,
+            " on email :",
+            user.email
+          );
+          errorMessage = error?.detail ?? "";
+        }
+      )
+      .then(async (result) => {
+        console.log("wallet-refill-result =>", result);
+        // 💡 Met à jour la transaction dans la DB : success, completed, etc.
+        if (result?.transaction.status == "FAILED") {
+          await transactions.update(
+            { ...transaction_init, status: "failed" },
+            () => {
+              console.log(
+                "transaction-refill-update-failed =>",
+                transaction_init.transaction_id
+              );
+            }
+          );
+        } else if (result?.transaction.status == "SUCCESS") {
+          await transactions.update(
+            { ...transaction_init, status: "done" },
+            () => {
+              console.log(
+                "transaction-refill-update-failed =>",
+                transaction_init.transaction_id
+              );
+            }
+          );
 
-    // await wallet.sendConfirmationViaMail(
-    //   reqBody.amount,
-    //   user.email ?? "",
-    //   trans?.transaction.pk ?? "",
-    //   trans && !trans.transaction.isSuccess()
-    // );
+          console.log("data-wallet =>", data);
+
+          //met à jour donc le portefeuille avec son argent
+          await wallet.update(
+            {
+              ...data,
+              funds: data.funds - (result.transaction.amount ?? 0),
+            },
+            (error) => {
+              isError = true;
+              console.log("wallet-update-error =>", error?.message);
+              errorMessage = error?.message ?? "";
+            }
+          );
+        }
+      })
+      .catch(async () => {
+        console.log(
+          "wallet-refill-error-catch-on-trans-id =>",
+          transaction_init.transaction_id
+        );
+        // 💡 Met à jour la transaction dans la DB : success, completed, etc.
+        await transactions.update(
+          { ...transaction_init, status: "failed" },
+          () => {
+            console.log(
+              "transaction-refill-update-failed =>",
+              transaction_init.transaction_id
+            );
+          }
+        );
+      });
 
     setTimeout(async () => {
       res.status(200).json({
@@ -171,21 +290,78 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
     );
   }
 
-  if (!isError && reqBody && transaction_init) {
-    wallet.withdraw(
-      transaction_init.transaction_id ?? "111-111-111",
-      reqBody,
-      (error) => {
-        isError = true;
+  if (!isError && reqBody && transaction_init && data) {
+    wallet
+      .withdraw(
+        transaction_init.transaction_id ?? "111-111-111",
+        reqBody,
+        (error) => {
+          isError = true;
+          console.log(
+            "wallet-withdraw-error =>",
+            error?.detail,
+            " on email :",
+            user.email
+          );
+          errorMessage = error?.detail ?? "";
+        }
+      )
+      .then(async (result) => {
+        console.log("wallet-refill-result =>", result);
+        // 💡 Met à jour la transaction dans la DB : success, completed, etc.
+        if (result?.transaction.status == "FAILED") {
+          await transactions.update(
+            { ...transaction_init, status: "failed" },
+            () => {
+              console.log(
+                "transaction-refill-update-failed =>",
+                transaction_init.transaction_id
+              );
+            }
+          );
+        } else if (result?.transaction.status == "SUCCESS") {
+          await transactions.update(
+            { ...transaction_init, status: "done" },
+            () => {
+              console.log(
+                "transaction-refill-update-failed =>",
+                transaction_init.transaction_id
+              );
+            }
+          );
+
+          console.log("data-wallet =>", data);
+
+          //met à jour donc le portefeuille avec son argent
+          await wallet.update(
+            {
+              ...data,
+              funds: data.funds - (result.transaction.amount ?? 0),
+            },
+            (error) => {
+              isError = true;
+              console.log("wallet-update-error =>", error?.message);
+              errorMessage = error?.message ?? "";
+            }
+          );
+        }
+      })
+      .catch(async () => {
         console.log(
-          "wallet-withdraw-error =>",
-          error?.detail,
-          " on email :",
-          user.email
+          "wallet-refill-error-catch-on-trans-id =>",
+          transaction_init.transaction_id
         );
-        errorMessage = error?.detail ?? "";
-      }
-    );
+        // 💡 Met à jour la transaction dans la DB : success, completed, etc.
+        await transactions.update(
+          { ...transaction_init, status: "failed" },
+          () => {
+            console.log(
+              "transaction-refill-update-failed =>",
+              transaction_init.transaction_id
+            );
+          }
+        );
+      });
 
     setTimeout(async () => {
       res.status(200).json({

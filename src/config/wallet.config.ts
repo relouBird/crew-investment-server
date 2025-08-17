@@ -27,7 +27,7 @@ const client_payment = new PaymentOperation({
  * @param {string} userNumber C'est le numero de la transaction
  * @param {number} amount c'est le montant de la transaction...
  * @param {PAYMENT_METHOD} service C'est le reseau sur lequel on effectue la transaction...
- * @returns {Promise<TransactionResponse>}
+ * @returns {Promise<TransactionResponse | undefined>}
  */
 const collectFromUserAccount = async (
   userNumber: string,
@@ -47,6 +47,7 @@ const collectFromUserAccount = async (
 
     return response;
   } catch (error) {
+    console.log("error =>", error);
     return undefined;
   }
 };
@@ -56,23 +57,28 @@ const collectFromUserAccount = async (
  * @param {string} userNumber C'est le numero de la transaction
  * @param {number} amount c'est le montant de la transaction...
  * @param {PAYMENT_METHOD} service C'est le reseau sur lequel on effectue la transaction...
- * @returns {Promise<TransactionResponse>}
+ * @returns {Promise<TransactionResponse | undefined>}
  */
 const sendFundsToUserAccount = async (
   userNumber: string,
   amount: number,
   service: PAYMENT_METHOD,
   transaction_id: string
-): Promise<TransactionResponse> => {
-  const response = await client_payment.makeDeposit({
-    receiver: userNumber || "670000000",
-    amount: amount || 300,
-    service: service || "MTN",
-    nonce: RandomGenerator.nonce(),
-    trxID: transaction_id, // optional
-  });
+): Promise<TransactionResponse | undefined> => {
+  try {
+    const response = await client_payment.makeDeposit({
+      receiver: userNumber || "670000000",
+      amount: amount || 300,
+      service: service || "MTN",
+      nonce: RandomGenerator.nonce(),
+      trxID: transaction_id, // optional
+    });
 
-  return response;
+    return response;
+  } catch (error) {
+    console.log("error =>", error);
+    return undefined;
+  }
 };
 
 /**

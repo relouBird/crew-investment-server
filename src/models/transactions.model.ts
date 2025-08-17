@@ -195,6 +195,28 @@ export class TransactionModel {
     return data;
   }
 
+  async getManyByUuid(
+    user_id: string,
+    errorHandler?: ErrorHandler
+  ): Promise<UserWalletTransaction[] | null> {
+    let isError: boolean = false;
+    const data = (await this.fetch.GetAllByParameter(
+      "creator_id",
+      user_id,
+      (error) => {
+        errorHandler && errorHandler(error);
+        isError = true;
+        console.log(`${this.name}-error => ${error}`);
+      }
+    )) as UserWalletTransaction[];
+
+    if (isError) {
+      return null;
+    }
+
+    return data;
+  }
+
   async getByTransactionID(
     uid: string,
     errorHandler?: ErrorHandler

@@ -32,8 +32,8 @@ server.get("/dev", (req: Request, res: Response) => {
   res.send("Bienvenue sur le INVESTIA API...");
 });
 
-// Action repetitive...
-nodeCron.schedule("* * * * *", async () => {
-  console.log("Checking Every Transactions...");
-  await socketCheckTransactionState();
-});
+// // Action repetitive...
+// nodeCron.schedule("* * * * *", async () => {
+//   console.log("Checking Every Transactions...");
+//   // await socketCheckTransactionState();
+// });
