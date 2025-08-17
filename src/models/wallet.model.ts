@@ -1,9 +1,18 @@
-import { PostgrestError, User } from "@supabase/supabase-js";
 import {
   collectFromUserAccount,
   refundToUserAccountFromTransactionId,
   sendFundsToUserAccount,
 } from "../config/wallet.config";
+import {
+  createPayment,
+  completePayment,
+  checkPayment,
+  cancelPayment,
+  listPayments,
+  createTransfers,
+  checkTransfers,
+  listTransfers,
+} from "../config/notchpay.config";
 import { Create } from "../database/create";
 import { Fetch } from "../database/fetch";
 import { Update } from "../database/update";
@@ -125,15 +134,6 @@ export class WalletModel {
       errorHandler && errorHandler(error as MesombError);
     }
   }
-  async finalizeRefill(
-    toRefill: RefillWalletType,
-    errorHandler?: ErrorHandler
-  ) {}
-
-  async finalizeWithdraw(
-    toRefill: RefillWalletType,
-    errorHandler?: ErrorHandler
-  ) {}
 
   async getById(
     id: string,

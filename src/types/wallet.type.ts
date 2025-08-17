@@ -1,3 +1,5 @@
+import { Transaction } from "notchpay-api";
+
 export type PAYMENT_METHOD = "MTN" | "ORANGE";
 
 export interface TransactionType {
@@ -43,3 +45,14 @@ export interface UserWalletTransaction {
 }
 
 export type TransactionState = "done" | "pending" | "failed";
+
+//------------------------------------------------------
+//---------------------NOTCH pAY------------------------
+//------------------------------------------------------
+
+export type METHOD_PAYMENT = "cm.mtn" | "cm.orange";
+
+export interface CancelResponse {
+  code: number;
+  message: string;
+}
