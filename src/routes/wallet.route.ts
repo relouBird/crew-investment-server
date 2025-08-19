@@ -29,15 +29,26 @@ WalletRouter.get(
 );
 
 WalletRouter.get(
-  "/all/wallets",
+  "/check-transaction/:id/payment",
   authenticateUserByAccessToken,
+  WalletController.checkPaymentState
+);
+
+WalletRouter.get(
+  "/check-transaction/:id/transfer",
+  authenticateUserByAccessToken,
+  WalletController.checkWithdrawState
+);
+
+WalletRouter.get(
+  "/all/wallets",
   WalletController.allWallets
 );
 
 WalletRouter.get(
   "/all/transactions",
-  authenticateUserByAccessToken,
   WalletController.allTransactions
 );
+
 
 export default WalletRouter;

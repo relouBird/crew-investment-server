@@ -5,15 +5,28 @@ import {
   PaymentResponse,
   PaymentsResponse,
   CompletePaymentResponse,
+  InitializePaymentPayload,
+  CompletePaymentPayload,
+  InitializeTransferPayload,
 } from "notchpay-api";
-import { CancelResponse, METHOD_PAYMENT } from "../types/wallet.type";
+import {
+  CancelResponse,
+  METHOD_PAYMENT,
+  METHOD_REQUEST,
+} from "../types/wallet.type";
 import { ApiError, WalletErrorHandler } from "../types/database.type";
 
-// Initialize with your secret key
-const notchpay = new NotchPay({
-  endpoint: "api.notchpay.co",
-  publicKey: process.env.NOTCHPAY_PUBLIC_KEY || "",
-});
+// Set up your secrets
+const BASE = "https://api.notchpay.co";
+const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY!;
+const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY!;
+
+const METHOD: Record<string, METHOD_REQUEST> = {
+  GET: "GET",
+  POST: "POST",
+  PUT: "PUT",
+  DELETE: "DELETE",
+};
 
 // For endpoints requiring advanced authentication
 const notchpayWithGrant = new NotchPay({
@@ -22,32 +35,76 @@ const notchpayWithGrant = new NotchPay({
   secretKey: process.env.NOTCHPAY_PRIVATE_KEY || "",
 });
 
+// ceci permet de gerer les depots...
+const notchPayment = async (
+  method: METHOD_REQUEST,
+  endpoint: string = "",
+  payload?: InitializePaymentPayload | CompletePaymentPayload
+) => {
+  const url = `${BASE}/payments/${encodeURIComponent(endpoint)}`;
+  console.log(method , "/ url =>", url);
+  const response = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `${PUBLIC_KEY}`, // ta clé secrète
+    },
+    body: payload && JSON.stringify(payload),
+  });
+  return response;
+};
+
+// ceci permet de gerer les transferts...
+const notchTransfer = async (
+  method: METHOD_REQUEST,
+  endpoint: string = "",
+  payload?: InitializeTransferPayload
+) => {
+  const response = await fetch(
+    `${BASE}/transfer/${encodeURIComponent(endpoint)}`,
+    {
+      method,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${PUBLIC_KEY}`,
+        "X-Grant": PRIVATE_KEY,
+      },
+      body: payload && JSON.stringify(payload),
+    }
+  );
+  return response;
+};
+
 /**
  * Cette fonction permet de créer une transaction pour l'utilisateur...
  * @param {string} email C'email de l'utilisateur
  * @param {string} phone C'est le numero de la transaction
  * @param {number} amount c'est le montant de la transaction...
- * @param {string} transaction_id C'est l'id de la transaction personnalisé...
  * @returns {Promise<PaymentResponse | undefined>}
  */
 export const createPayment = async (
   email: string,
   phone: string,
   amount: number,
-  transaction_id: string,
   errorHandler?: WalletErrorHandler
 ): Promise<PaymentResponse | undefined> => {
   try {
-    const payment: PaymentResponse = await notchpay.payments.initialize({
+    const payload = {
       amount,
       currency: "XAF",
       email,
       phone,
-      reference: transaction_id,
-    });
+    };
+    const response = await notchPayment(METHOD.POST, "", payload);
 
-    console.log("Payment created:", payment);
-    return payment;
+    if (!response.ok) {
+      throw new Error(
+        `Process payment failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const payments = (await response.json()) as PaymentResponse;
+    console.log("Payments created:", payments);
+    return payments;
   } catch (error) {
     console.log("creating-payment-error =>", error);
     errorHandler && errorHandler(error as ApiError);
@@ -69,19 +126,22 @@ export const completePayment = async (
   errorHandler?: WalletErrorHandler
 ): Promise<CompletePaymentResponse | undefined> => {
   try {
-    const paymentLaunchResponse: CompletePaymentResponse =
-      await notchpay.payments.complete(transaction_id, {
-        channel: service,
-        data: {
-          phone,
-        },
-      });
+    const payload = {
+      channel: service,
+      data: {
+        phone,
+      },
+    };
+    const response = await notchPayment(METHOD.POST, transaction_id, payload);
 
-    console.log(
-      "Payment waiting for customer completion :",
-      paymentLaunchResponse.message
-    );
-    return paymentLaunchResponse;
+    if (!response.ok) {
+      throw new Error(
+        `Process payment failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const payments = (await response.json()) as CompletePaymentResponse;
+    console.log("Payment waiting for customer completion :", payments.message);
+    return payments;
   } catch (error) {
     console.log("process-payment-error =>", error);
     errorHandler && errorHandler(error as ApiError);
@@ -99,16 +159,21 @@ export const checkPayment = async (
   errorHandler?: WalletErrorHandler
 ): Promise<PaymentResponse | undefined> => {
   try {
-    const paymentLaunchResponse: PaymentResponse =
-      await notchpay.payments.findOne(transaction_id);
+    const response = await notchPayment(METHOD.GET, transaction_id);
 
+    if (!response.ok) {
+      throw new Error(
+        `Process payment failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const payments = (await response.json()) as PaymentResponse;
     console.log(
       "Payment check-",
-      paymentLaunchResponse.transaction.reference,
+      payments.transaction.reference,
       ", state :",
-      paymentLaunchResponse.transaction.status
+      payments.transaction.status
     );
-    return paymentLaunchResponse;
+    return payments;
   } catch (error) {
     console.log("checking-payment-error =>", error);
     errorHandler && errorHandler(error as ApiError);
@@ -126,16 +191,21 @@ export const cancelPayment = async (
   errorHandler?: WalletErrorHandler
 ): Promise<CancelResponse | undefined> => {
   try {
-    const paymentLaunchResponse =
-      await notchpay.payments.cancel(transaction_id);
+    const response = await notchPayment(METHOD.DELETE, transaction_id);
 
+    if (!response.ok) {
+      throw new Error(
+        `Process payment failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const payments = response.json() as unknown as CancelResponse;
     console.log(
       "Payment message-",
-      paymentLaunchResponse.code,
+      payments.code,
       ", state :",
-      paymentLaunchResponse.message
+      payments.message
     );
-    return paymentLaunchResponse;
+    return payments;
   } catch (error) {
     console.log("canceling-payment-error =>", error);
     errorHandler && errorHandler(error as ApiError);
@@ -151,8 +221,14 @@ export const listPayments = async (
   errorHandler?: WalletErrorHandler
 ): Promise<PaymentsResponse | undefined> => {
   try {
-    const payments: PaymentsResponse = await notchpay.payments.findAll();
+    const response = await notchPayment(METHOD.GET);
 
+    if (!response.ok) {
+      throw new Error(
+        `Process payment failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const payments = response.json() as unknown as PaymentsResponse;
     console.log("Payments retrieved:", payments);
     return payments;
   } catch (error) {
@@ -171,14 +247,12 @@ export const listPayments = async (
  * @param {string} phone C'est le numero de la transaction
  * @param {METHOD_PAYMENT} service C'est le reseau sur lequel on effectue la transaction...
  * @param {number} amount c'est le montant de la transaction...
- * @param {string} transaction_id C'est l'id de la transaction personnalisé...
  * @returns {Promise<PaymentBuildResponse | undefined>}
  */
 export const createTransfers = async (
   phone: string,
   service: METHOD_PAYMENT,
   amount: number,
-  transaction_id: string,
   errorHandler?: WalletErrorHandler
 ): Promise<TransferResponse | undefined> => {
   try {
@@ -191,7 +265,6 @@ export const createTransfers = async (
         beneficiary: {
           phone,
         },
-        reference: transaction_id,
       });
 
     console.log("Payment created:", transfer);

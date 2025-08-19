@@ -1,27 +1,20 @@
 import {
-  collectFromUserAccount,
-  refundToUserAccountFromTransactionId,
-  sendFundsToUserAccount,
-} from "../config/wallet.config";
-import {
   createPayment,
   completePayment,
-  checkPayment,
-  cancelPayment,
   listPayments,
   createTransfers,
-  checkTransfers,
   listTransfers,
 } from "../config/notchpay.config";
 import { Create } from "../database/create";
 import { Fetch } from "../database/fetch";
 import { Update } from "../database/update";
-import {
-  ErrorHandler,
-  MesombError,
-  MesombErrorHandler,
-} from "../types/database.type";
+import { ErrorHandler, WalletErrorHandler } from "../types/database.type";
 import { RefillWalletType, UserWalletType } from "../types/wallet.type";
+import {
+  PaymentResponse,
+  PaymentsResponse,
+  TransfersResponse,
+} from "notchpay-api";
 
 export class WalletModel {
   protected name: string = "wallets";
@@ -88,51 +81,78 @@ export class WalletModel {
   }
 
   async refill(
-    transaction_id: string,
+    email: string,
     toRefill: RefillWalletType,
-    errorHandler?: MesombErrorHandler
+    errorHandler?: WalletErrorHandler
   ) {
-    try {
-      const data = await collectFromUserAccount(
-        toRefill.transaction_number,
-        toRefill.amount,
-        toRefill.service,
-        transaction_id
-      );
+    let isError = false;
+    const dataBuild = (await createPayment(
+      email,
+      toRefill.transaction_number,
+      toRefill.amount,
+      (error) => {
+        isError = true;
+        errorHandler && errorHandler(error);
+      }
+    )) as PaymentResponse;
 
-      return data;
-    } catch (error) {
-      errorHandler && errorHandler(error as MesombError);
+    if (!isError) {
+      setTimeout(async () => {
+        await completePayment(
+          dataBuild.transaction.reference,
+          toRefill.service,
+          toRefill.transaction_number,
+          (error) => {
+            isError = true;
+            errorHandler && errorHandler(error);
+          }
+        );
+      }, 5000);
+      return dataBuild;
     }
+    return undefined;
   }
 
   async withdraw(
-    transaction_id: string,
     toRefill: RefillWalletType,
-    errorHandler?: MesombErrorHandler
+    errorHandler?: WalletErrorHandler
   ) {
-    try {
-      const data = await sendFundsToUserAccount(
-        toRefill.transaction_number,
-        toRefill.amount,
-        toRefill.service,
-        transaction_id
-      );
-
+    let isError = false;
+    const data = await createTransfers(
+      toRefill.transaction_number,
+      toRefill.service,
+      toRefill.amount,
+      (error) => {
+        isError = true;
+        errorHandler && errorHandler(error);
+      }
+    );
+    if (!isError) {
       return data;
-    } catch (error) {
-      errorHandler && errorHandler(error as MesombError);
     }
+    return undefined;
   }
 
-  async refund(transaction_id: string, errorHandler?: MesombErrorHandler) {
-    try {
-      const data = await refundToUserAccountFromTransactionId(transaction_id);
+  async refillList(errorHandler?: WalletErrorHandler) {
+    let isError = false;
+    const dataBuild = (await listPayments((error) => {
+      isError = true;
+      errorHandler && errorHandler(error);
+    })) as PaymentsResponse;
 
-      return data;
-    } catch (error) {
-      errorHandler && errorHandler(error as MesombError);
-    }
+    if (!isError) return dataBuild;
+    return undefined;
+  }
+
+  async withdrawList(errorHandler?: WalletErrorHandler) {
+    let isError = false;
+    const dataBuild = (await listTransfers((error) => {
+      isError = true;
+      errorHandler && errorHandler(error);
+    })) as TransfersResponse;
+
+    if (!isError) return dataBuild;
+    return undefined;
   }
 
   async getById(

@@ -3,11 +3,11 @@ import { User } from "@supabase/supabase-js";
 import { WalletModel } from "../models/wallet.model";
 import {
   RefillWalletType,
-  TransactionType,
   UserWalletTransaction,
   UserWalletType,
 } from "../types/wallet.type";
 import { TransactionModel } from "../models/transactions.model";
+import { TransferResponse, PaymentResponse } from "notchpay-api";
 
 // fonction qui est appelé afin de recuperer toutes les informations par rapport au compte d'un utilisateur..
 export const getAccountDetails = async (req: Request, res: Response) => {
@@ -90,7 +90,6 @@ export const refillAccount = async (req: Request, res: Response) => {
   const wallet = new WalletModel();
   const transactions = new TransactionModel();
   // utils datas...
-  let transaction_init: UserWalletTransaction | null = null;
   const reqBody = req.body as RefillWalletType; // Ce type...
   const user = (req as any).user as User;
   let isError = false;
@@ -114,7 +113,7 @@ export const refillAccount = async (req: Request, res: Response) => {
     console.log("data-getted =>", data);
   }
 
-  if (!data && reqBody) {
+  if (!data && reqBody && isError) {
     data = await wallet.create({ uid: user.id }, (error) => {
       isError = true;
       console.log(
@@ -127,99 +126,50 @@ export const refillAccount = async (req: Request, res: Response) => {
     });
   }
 
-  if (!isError && reqBody) {
-    transaction_init = await transactions.create(
-      { creator_id: user.id, amount: reqBody.amount },
+  if (!isError && reqBody && data) {
+    const dataRefill = await wallet.refill(
+      user.email ?? "",
+      reqBody,
       (error) => {
         isError = true;
         console.log(
-          "transaction-create-error =>",
-          error?.message,
+          "wallet-refill-error =>",
+          error.message,
           " on email :",
           user.email
         );
-        errorMessage = error?.message ?? "";
+        errorMessage = error.message ?? "";
       }
     );
-  }
 
-  if (!isError && reqBody && transaction_init && data) {
-    wallet
-      .refill(
-        transaction_init.transaction_id ?? "111-111-111",
-        reqBody,
+    const transaction_init =
+      dataRefill &&
+      (await transactions.create(
+        {
+          creator_id: user.id,
+          amount: reqBody.amount,
+          transaction_id: dataRefill?.transaction.reference,
+        },
         (error) => {
           isError = true;
           console.log(
-            "wallet-refill-error =>",
-            error?.detail,
+            "transaction-create-error =>",
+            error?.message,
             " on email :",
             user.email
           );
-          errorMessage = error?.detail ?? "";
+          errorMessage = error?.message ?? "";
         }
-      )
-      .then(async (result) => {
-        console.log("wallet-refill-result =>", result);
-        // 💡 Met à jour la transaction dans la DB : success, completed, etc.
-        if (result?.transaction.status == "FAILED") {
-          await transactions.update(
-            { ...transaction_init, status: "failed" },
-            () => {
-              console.log(
-                "transaction-refill-update-failed =>",
-                transaction_init.transaction_id
-              );
-            }
-          );
-        } else if (result?.transaction.status == "SUCCESS") {
-          await transactions.update(
-            { ...transaction_init, status: "done" },
-            () => {
-              console.log(
-                "transaction-refill-update-failed =>",
-                transaction_init.transaction_id
-              );
-            }
-          );
-
-          console.log("data-wallet =>", data);
-
-          //met à jour donc le portefeuille avec son argent
-          await wallet.update(
-            {
-              ...data,
-              funds: data.funds - (result.transaction.amount ?? 0),
-            },
-            (error) => {
-              isError = true;
-              console.log("wallet-update-error =>", error?.message);
-              errorMessage = error?.message ?? "";
-            }
-          );
-        }
-      })
-      .catch(async () => {
-        console.log(
-          "wallet-refill-error-catch-on-trans-id =>",
-          transaction_init.transaction_id
-        );
-        // 💡 Met à jour la transaction dans la DB : success, completed, etc.
-        await transactions.update(
-          { ...transaction_init, status: "failed" },
-          () => {
-            console.log(
-              "transaction-refill-update-failed =>",
-              transaction_init.transaction_id
-            );
-          }
-        );
-      });
+      ));
 
     setTimeout(async () => {
       res.status(200).json({
         message: "Transaction Initialized...",
-        data: { ...reqBody, transaction_id: transaction_init.transaction_id },
+        data: {
+          ...reqBody,
+          transaction_id: transaction_init?.transaction_id,
+          transaction_details: dataRefill?.transaction,
+        },
       });
     }, 2000);
   } else {
@@ -237,7 +187,6 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
   const wallet = new WalletModel();
   const transactions = new TransactionModel();
   // utils datas...
-  let transaction_init: UserWalletTransaction | null = null;
   const reqBody = req.body as RefillWalletType; // Ce type...
   const user = (req as any).user as User;
   let isError = false;
@@ -274,101 +223,64 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
     });
   }
 
-  if (!isError && reqBody) {
-    transaction_init = await transactions.create(
-      { creator_id: user.id, amount: reqBody.amount, type: "withdrawal" },
-      (error) => {
-        isError = true;
-        console.log(
-          "transaction-create-error =>",
-          error?.message,
-          " on email :",
-          user.email
-        );
-        errorMessage = error?.message ?? "";
-      }
-    );
-  }
+  if (!isError && reqBody && data && reqBody.amount < data.funds) {
+    const dataWithdraw = await wallet.withdraw(reqBody, (error) => {
+      isError = true;
+      console.log(
+        "wallet-withdraw-error =>",
+        error.message,
+        " on email :",
+        user.email
+      );
+      errorMessage = error.message ?? "";
+    });
 
-  if (!isError && reqBody && transaction_init && data) {
-    wallet
-      .withdraw(
-        transaction_init.transaction_id ?? "111-111-111",
-        reqBody,
+    const transaction_init =
+      dataWithdraw &&
+      (await transactions.create(
+        { creator_id: user.id, amount: reqBody.amount, type: "withdrawal" },
         (error) => {
           isError = true;
           console.log(
-            "wallet-withdraw-error =>",
-            error?.detail,
+            "transaction-create-error =>",
+            error?.message,
             " on email :",
             user.email
           );
-          errorMessage = error?.detail ?? "";
+          errorMessage = error?.message ?? "";
         }
-      )
-      .then(async (result) => {
-        console.log("wallet-refill-result =>", result);
-        // 💡 Met à jour la transaction dans la DB : success, completed, etc.
-        if (result?.transaction.status == "FAILED") {
-          await transactions.update(
-            { ...transaction_init, status: "failed" },
-            () => {
-              console.log(
-                "transaction-refill-update-failed =>",
-                transaction_init.transaction_id
-              );
-            }
-          );
-        } else if (result?.transaction.status == "SUCCESS") {
-          await transactions.update(
-            { ...transaction_init, status: "done" },
-            () => {
-              console.log(
-                "transaction-refill-update-failed =>",
-                transaction_init.transaction_id
-              );
-            }
-          );
+      ));
 
-          console.log("data-wallet =>", data);
-
-          //met à jour donc le portefeuille avec son argent
-          await wallet.update(
-            {
-              ...data,
-              funds: data.funds - (result.transaction.amount ?? 0),
-            },
-            (error) => {
-              isError = true;
-              console.log("wallet-update-error =>", error?.message);
-              errorMessage = error?.message ?? "";
-            }
-          );
-        }
-      })
-      .catch(async () => {
-        console.log(
-          "wallet-refill-error-catch-on-trans-id =>",
-          transaction_init.transaction_id
-        );
-        // 💡 Met à jour la transaction dans la DB : success, completed, etc.
-        await transactions.update(
-          { ...transaction_init, status: "failed" },
-          () => {
-            console.log(
-              "transaction-refill-update-failed =>",
-              transaction_init.transaction_id
-            );
-          }
-        );
-      });
+    //met à jour donc le portefeuille avec son argent
+    await wallet.update(
+      {
+        ...data,
+        funds: data.funds - (dataWithdraw?.transfer.amount_total ?? 0),
+      },
+      (error) => {
+        isError = true;
+        console.log("wallet-update-error =>", error?.message);
+        errorMessage = error?.message ?? "";
+      }
+    );
 
     setTimeout(async () => {
       res.status(200).json({
         message: "WithDraw Transaction Initialized...",
-        data: { ...reqBody, transaction_id: transaction_init.transaction_id },
+        data: {
+          ...reqBody,
+          transaction_id: transaction_init?.transaction_id,
+          transaction_details: dataWithdraw?.transfer,
+        },
       });
     }, 2000);
+  } else if (!isError && reqBody && data && reqBody.amount > data.funds) {
+    setTimeout(async () => {
+      res.status(404).json({
+        message: "Not Found...",
+        data: "You've insufficient balance funds...",
+      });
+    }, 1000);
   } else {
     setTimeout(async () => {
       res.status(404).json({
@@ -440,14 +352,186 @@ export const checkTransactionState = async (req: Request, res: Response) => {
   }
 };
 
+// fonction asynchrone qui va s'appeler  pour controller les transactions en cours...
+export const checkPaymentState = async (req: Request, res: Response) => {
+  const transactions = new TransactionModel();
+  const wallets = new WalletModel();
+  let isError = false;
+  let errorMessage = "";
+  let transactionState: PaymentResponse | null = null;
+
+  const data = await transactions.getByTransactionID(
+    req.params.id ?? "",
+    (error) => {
+      isError = true;
+      console.log("transactions-getting-error =>", error?.message);
+      errorMessage = error?.message ?? "";
+    }
+  );
+
+  if (!isError && data) {
+    transactionState = await transactions.checkPayment(
+      data?.transaction_id ?? "",
+      (error) => {
+        isError = true;
+        errorMessage = error.message ?? "";
+      }
+    );
+  }
+
+  if (!isError && data && transactionState) {
+    if (transactionState.transaction.status == "pending") {
+      // continue
+    } else if (transactionState.transaction.status == "processing") {
+      // continue
+    } else if (transactionState.transaction.status == "complete") {
+      // Recuperer d'abord son portefeuille..
+      const wallet = (await wallets.getByUid(data.creator_id, (error) => {
+        isError = true;
+        console.log("wallet-getting-error =>", error?.message);
+        errorMessage = error?.message ?? "";
+      })) as UserWalletType;
+
+      // met à jour la transaction...
+      await transactions.update({ ...data, status: "done" }, (error) => {
+        isError = true;
+        console.log("transactions-update-error =>", error?.message);
+        errorMessage = error?.message ?? "";
+      });
+
+      //met à jour donc le portefeuille avec son argent
+      await wallets.update(
+        {
+          ...wallet,
+          funds: wallet.funds + transactionState.transaction.amount,
+        },
+        (error) => {
+          isError = true;
+          console.log("wallet-update-error =>", error?.message);
+          errorMessage = error?.message ?? "";
+        }
+      );
+    } else {
+      await transactions.update({ ...data, status: "failed" }, (error) => {
+        isError = true;
+        console.log("transactions-update-error =>", error?.message);
+        errorMessage = error?.message ?? "";
+      });
+    }
+  } else {
+  }
+
+  if (!isError && data && transactionState) {
+    setTimeout(async () => {
+      res.status(200).json({
+        message: "Transaction Checked...",
+        data: transactionState,
+      });
+    }, 1000);
+  } else {
+    setTimeout(async () => {
+      res.status(404).json({
+        message: "No Transaction To Check Found Test...",
+        data: errorMessage,
+      });
+    }, 1000);
+  }
+};
+
+// fonction asynchrone pour controller les transactions en cours...
+export const checkWithdrawState = async (req: Request, res: Response) => {
+  const transactions = new TransactionModel();
+  const wallets = new WalletModel();
+  let isError = false;
+  let errorMessage = "";
+  let transactionState: TransferResponse | null = null;
+
+  const data = await transactions.getByTransactionID(
+    req.params.id ?? "",
+    (error) => {
+      isError = true;
+      console.log("transactions-getting-error =>", error?.message);
+      errorMessage = error?.message ?? "";
+    }
+  );
+
+  if (!isError && data) {
+    transactionState = await transactions.checkTransfer(
+      data.transaction_id ?? "",
+      (error) => {
+        isError = true;
+        errorMessage = error.message ?? "";
+      }
+    );
+  }
+
+  if (!isError && data && transactionState) {
+    if (transactionState.transfer.status == "pending") {
+      // continue;
+    } else if (transactionState.transfer.status == "processing") {
+      // continue;
+    } else if (transactionState.transfer.status == "complete") {
+      // met à jour la transaction...
+      await transactions.update({ ...data, status: "done" }, (error) => {
+        isError = true;
+        console.log("transactions-update-error =>", error?.message);
+        errorMessage = error?.message ?? "";
+      });
+    } else {
+      // Recuperer d'abord son portefeuille..
+      const wallet = (await wallets.getByUid(data.creator_id, (error) => {
+        isError = true;
+        console.log("wallet-getting-error =>", error?.message);
+        errorMessage = error?.message ?? "";
+      })) as UserWalletType;
+
+      await transactions.update({ ...data, status: "failed" }, (error) => {
+        isError = true;
+        console.log("transactions-update-error =>", error?.message);
+        errorMessage = error?.message ?? "";
+      });
+
+      //met à jour donc le portefeuille avec son argent
+      await wallets.update(
+        {
+          ...wallet,
+          funds: wallet.funds + transactionState.transfer.amount,
+        },
+        (error) => {
+          isError = true;
+          console.log("wallet-update-error =>", error?.message);
+          errorMessage = error?.message ?? "";
+        }
+      );
+    }
+  } else {
+  }
+
+  if (!isError && data && transactionState) {
+    setTimeout(async () => {
+      res.status(200).json({
+        message: "Transfers Checked...",
+        data: transactionState,
+      });
+    }, 1000);
+  } else {
+    setTimeout(async () => {
+      res.status(404).json({
+        message: "No Transfers To Check Found Test...",
+        data: errorMessage,
+      });
+    }, 1000);
+  }
+};
+
 // fonction asynchrone qui va s'appeler chaque 30 secondes pour controller les transactions en cours...
-export const socketCheckTransactionState = async () => {
+export const socketCheckPaymentState = async () => {
   const transactions = new TransactionModel();
   const wallets = new WalletModel();
   let isError = false;
   let errorMessage = "";
   let transaction_id_tab: string[] = [];
-  let transactionStateList: TransactionType[] | null = null;
+  let transactionStateList: PaymentResponse[] | null = null;
 
   const data = await transactions.getManyByState("pending", (error) => {
     isError = true;
@@ -460,11 +544,11 @@ export const socketCheckTransactionState = async () => {
       return elt.transaction_id;
     });
 
-    transactionStateList = await transactions.checkTransactionStateMention(
+    transactionStateList = await transactions.checkListPayment(
       transaction_id_tab,
       (error) => {
         isError = true;
-        errorMessage = error?.detail ?? "";
+        errorMessage = error.message ?? "";
       }
     );
   }
@@ -475,9 +559,12 @@ export const socketCheckTransactionState = async () => {
       const elementState = transactionStateList[index];
       const transaction = data[index];
 
-      if (elementState.status == "PENDING") {
+      if (elementState.transaction.status == "pending") {
         continue;
-      } else if (elementState.status == "SUCCESS") {
+      }
+      if (elementState.transaction.status == "processing") {
+        continue;
+      } else if (elementState.transaction.status == "complete") {
         // Recuperer d'abord son portefeuille..
         const wallet = (await wallets.getByUid(
           transaction.creator_id,
@@ -516,6 +603,94 @@ export const socketCheckTransactionState = async () => {
           (error) => {
             isError = true;
             console.log("transactions-update-error =>", error?.message);
+            errorMessage = error?.message ?? "";
+          }
+        );
+      }
+    }
+  } else {
+  }
+};
+
+// fonction asynchrone qui va s'appeler chaque 30 secondes pour controller les transactions en cours...
+export const socketCheckWithdrawState = async () => {
+  const transactions = new TransactionModel();
+  const wallets = new WalletModel();
+  let isError = false;
+  let errorMessage = "";
+  let transaction_id_tab: string[] = [];
+  let transactionStateList: TransferResponse[] | null = null;
+
+  const data = await transactions.getManyByState("pending", (error) => {
+    isError = true;
+    console.log("transactions-getting-error =>", error?.message);
+    errorMessage = error?.message ?? "";
+  });
+
+  if (!isError && data) {
+    transaction_id_tab = data.map((elt) => {
+      return elt.transaction_id;
+    });
+
+    transactionStateList = await transactions.checkListTransfers(
+      transaction_id_tab,
+      (error) => {
+        isError = true;
+        errorMessage = error.message ?? "";
+      }
+    );
+  }
+
+  if (!isError && data && transactionStateList) {
+    // maintenant nous allons check toutes les transactions et les recuperer
+    for (let index = 0; index < transactionStateList.length; index++) {
+      const elementState = transactionStateList[index];
+      const transaction = data[index];
+
+      if (elementState.transfer.status == "pending") {
+        continue;
+      }
+      if (elementState.transfer.status == "processing") {
+        continue;
+      } else if (elementState.transfer.status == "complete") {
+        // met à jour la transaction...
+        await transactions.update(
+          { ...transaction, status: "done" },
+          (error) => {
+            isError = true;
+            console.log("transactions-update-error =>", error?.message);
+            errorMessage = error?.message ?? "";
+          }
+        );
+      } else {
+        // Recuperer d'abord son portefeuille..
+        const wallet = (await wallets.getByUid(
+          transaction.creator_id,
+          (error) => {
+            isError = true;
+            console.log("wallet-getting-error =>", error?.message);
+            errorMessage = error?.message ?? "";
+          }
+        )) as UserWalletType;
+
+        await transactions.update(
+          { ...transaction, status: "failed" },
+          (error) => {
+            isError = true;
+            console.log("transactions-update-error =>", error?.message);
+            errorMessage = error?.message ?? "";
+          }
+        );
+
+        //met à jour donc le portefeuille avec son argent
+        await wallets.update(
+          {
+            ...wallet,
+            funds: wallet.funds + transaction.amount,
+          },
+          (error) => {
+            isError = true;
+            console.log("wallet-update-error =>", error?.message);
             errorMessage = error?.message ?? "";
           }
         );

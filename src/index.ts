@@ -10,7 +10,7 @@ import UserRouter from "./routes/user.route";
 import WalletRouter from "./routes/wallet.route";
 
 // Importation de Controlleur... Cas speciale.
-import { socketCheckTransactionState } from "./controllers/wallet.controller";
+import { socketCheckPaymentState,socketCheckWithdrawState } from "./controllers/wallet.controller";
 
 dotenv.config();
 const PORT = Number(process.env.PORT ?? 3500);
