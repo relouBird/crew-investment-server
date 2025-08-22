@@ -1,6 +1,7 @@
 export interface UserWalletType {
   id: number;
   uid: string;
+  funds_id: string;
   funds: number;
   created_at: string;
 }
@@ -28,6 +29,61 @@ export type TransactionState = "done" | "pending" | "failed";
 //------------------------------------------------------
 
 export type METHOD_PAYMENT = "cm.mtn" | "cm.orange";
+
+export interface BeneficiaryObject {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  country: string;
+  currency: string;
+  type: "mobile_money" | "bank_account" | "cash_pickup";
+  metadata: Record<string, string>;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface beneficiaryResponse {
+  status: string;
+  message: string;
+  code: number;
+  beneficiary: BeneficiaryObject;
+}
+
+export interface beneficiariesResponse {
+  status: string;
+  message: string;
+  code: number;
+  beneficiary: Array<BeneficiaryObject>;
+}
+
+export interface InitializeBeneficiaryPayload {
+  channel: string;
+  name: string;
+  email: string;
+  phone: string;
+  account_number: string;
+  country: string;
+  currency: string;
+  type: string;
+}
+
+// export interface InitializeBeneficiaryPayload {
+//   name: string;
+//   email: string;
+//   phone: string;
+//   country: "CM";
+//   currency: "XAF";
+//   type: "mobile_money";
+// }
+
+export interface InitializeTransferPayload {
+  beneficiary: string;
+  amount: number;
+  currency: string;
+  channel : string;
+  description: string;
+}
 
 export interface CancelResponse {
   code: number;

@@ -1,5 +1,4 @@
 import {
-  NotchPay,
   TransferResponse,
   TransfersResponse,
   PaymentResponse,
@@ -7,10 +6,13 @@ import {
   CompletePaymentResponse,
   InitializePaymentPayload,
   CompletePaymentPayload,
-  InitializeTransferPayload,
 } from "notchpay-api";
 import {
+  beneficiariesResponse,
+  beneficiaryResponse,
   CancelResponse,
+  InitializeBeneficiaryPayload,
+  InitializeTransferPayload,
   METHOD_PAYMENT,
   METHOD_REQUEST,
 } from "../types/wallet.type";
@@ -28,13 +30,6 @@ const METHOD: Record<string, METHOD_REQUEST> = {
   DELETE: "DELETE",
 };
 
-// For endpoints requiring advanced authentication
-const notchpayWithGrant = new NotchPay({
-  endpoint: "api.notchpay.co",
-  publicKey: process.env.NOTCHPAY_PUBLIC_KEY || "",
-  secretKey: process.env.NOTCHPAY_PRIVATE_KEY || "",
-});
-
 // ceci permet de gerer les depots...
 const notchPayment = async (
   method: METHOD_REQUEST,
@@ -42,7 +37,7 @@ const notchPayment = async (
   payload?: InitializePaymentPayload | CompletePaymentPayload
 ) => {
   const url = `${BASE}/payments/${encodeURIComponent(endpoint)}`;
-  console.log(method , "/ url =>", url);
+  console.log(method, "/ url =>", url);
   const response = await fetch(url, {
     method,
     headers: {
@@ -60,20 +55,45 @@ const notchTransfer = async (
   endpoint: string = "",
   payload?: InitializeTransferPayload
 ) => {
-  const response = await fetch(
-    `${BASE}/transfer/${encodeURIComponent(endpoint)}`,
-    {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${PUBLIC_KEY}`,
-        "X-Grant": PRIVATE_KEY,
-      },
-      body: payload && JSON.stringify(payload),
-    }
-  );
+  const url = `${BASE}/transfers/${encodeURIComponent(endpoint)}`;
+  console.log(method, "/ url =>", url);
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `${PUBLIC_KEY}`,
+      "X-Grant": PRIVATE_KEY,
+    },
+    body: payload && JSON.stringify(payload),
+  });
   return response;
 };
+
+// ceci permet de gerer les transferts...
+const notchBeneficiary = async (
+  method: METHOD_REQUEST,
+  endpoint: string = "",
+  payload?: InitializeBeneficiaryPayload
+) => {
+  const url = `${BASE}/beneficiaries/${encodeURIComponent(endpoint)}`;
+  console.log(method, "/ url =>", url);
+
+  const response = await fetch(url, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `${PUBLIC_KEY}`,
+      "X-Grant": PRIVATE_KEY,
+    },
+    body: payload && JSON.stringify(payload),
+  });
+  return response;
+};
+
+//---------------------------------------
+//--------------PAYMENTS-----------------
+//---------------------------------------
 
 /**
  * Cette fonction permet de créer une transaction pour l'utilisateur...
@@ -244,30 +264,34 @@ export const listPayments = async (
 
 /**
  * Cette fonction permet de créer un transfert pour envoyer des fonds chez un utilisateur
- * @param {string} phone C'est le numero de la transaction
+ * @param {string} recipient_id C'est le numero de la transaction
+ * @param {number} amount C'est le montant à retirer
  * @param {METHOD_PAYMENT} service C'est le reseau sur lequel on effectue la transaction...
  * @param {number} amount c'est le montant de la transaction...
  * @returns {Promise<PaymentBuildResponse | undefined>}
  */
 export const createTransfers = async (
-  phone: string,
-  service: METHOD_PAYMENT,
+  recipient_id: string,
   amount: number,
   errorHandler?: WalletErrorHandler
 ): Promise<TransferResponse | undefined> => {
   try {
-    const transfer: TransferResponse =
-      await notchpayWithGrant.transfers.initialize({
-        amount,
-        currency: "XAF",
-        description: "Funds acquisition...",
-        channel: service,
-        beneficiary: {
-          phone,
-        },
-      });
+    const payload = {
+      beneficiary: recipient_id,
+      amount,
+      currency: "XAF",
+      channel : "cm.mobile",
+      description: "Payment for services",
+    };
+    const response = await notchTransfer(METHOD.POST, "", payload);
 
-    console.log("Payment created:", transfer);
+    if (!response.ok) {
+      throw new Error(
+        `Process transfer failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const transfer = (await response.json()) as TransferResponse;
+    console.log("Transfer created:", transfer);
     return transfer;
   } catch (error) {
     console.log("creating-transfers-error =>", error);
@@ -286,10 +310,15 @@ export const checkTransfers = async (
   errorHandler?: WalletErrorHandler
 ): Promise<TransferResponse | undefined> => {
   try {
-    const transfer: TransferResponse =
-      await notchpayWithGrant.transfers.findOne(transaction_id);
+    const response = await notchTransfer(METHOD.GET, transaction_id);
 
-    console.log("Payment created:", transfer);
+    if (!response.ok) {
+      throw new Error(
+        `Process transfer failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const transfer = (await response.json()) as TransferResponse;
+    console.log("Transfer checked:", transfer);
     return transfer;
   } catch (error) {
     console.log("checking-transfers-error =>", error);
@@ -306,13 +335,163 @@ export const listTransfers = async (
   errorHandler?: WalletErrorHandler
 ): Promise<TransfersResponse | undefined> => {
   try {
-    const transfer: TransfersResponse =
-      await notchpayWithGrant.transfers.findAll();
+    const response = await notchTransfer(METHOD.GET, "");
 
-    console.log("Payment created:", transfer);
+    if (!response.ok) {
+      throw new Error(
+        `Process transfer failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const transfer = (await response.json()) as TransfersResponse;
+    console.log("Transfers listed :", transfer);
     return transfer;
   } catch (error) {
     console.log("listing-transfers-error =>", error);
+    errorHandler && errorHandler(error as ApiError);
+    return undefined;
+  }
+};
+
+//---------------------------------------
+//-----------BENEFICIARY-----------------
+//---------------------------------------
+
+/**
+ * Cette fonction permet de lister tout les beneficiaires pour envoyer des fonds chez un utilisateur...
+ * @returns {Promise<PaymentBuildResponse | undefined>}
+ */
+export const listBeneficiaries = async (
+  errorHandler?: WalletErrorHandler
+): Promise<beneficiariesResponse | undefined> => {
+  try {
+    const response = await notchBeneficiary(METHOD.GET, "");
+
+    if (!response.ok) {
+      throw new Error(
+        `Process beneficiary failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const beneficiary = (await response.json()) as beneficiariesResponse;
+    console.log("Beneficiaries listed :", beneficiary);
+    return beneficiary;
+  } catch (error) {
+    console.log("listing-beneficiary-error =>", error);
+    errorHandler && errorHandler(error as ApiError);
+    return undefined;
+  }
+};
+
+/**
+ * Cette fonction permet de recuperer un beneficiaire par son id.
+ * @param {string} transaction_id C'est l'id de la transaction personnalisé...
+ * @returns {Promise<PaymentBuildResponse | undefined>}
+ */
+export const getBeneficiary = async (
+  transaction_id: string,
+  errorHandler?: WalletErrorHandler
+): Promise<beneficiaryResponse | undefined> => {
+  try {
+    const response = await notchBeneficiary(METHOD.GET, transaction_id);
+
+    if (!response.ok) {
+      throw new Error(
+        `Process beneficiary failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const transfer = (await response.json()) as beneficiaryResponse;
+    console.log("Beneficiary checked:", transfer);
+    return transfer;
+  } catch (error) {
+    console.log("checking-beneficiary-error =>", error);
+    errorHandler && errorHandler(error as ApiError);
+    return undefined;
+  }
+};
+
+/**
+ * Cette fonction permet de mettre à jour un beneficiaire par son id.
+ * @param {string} beneficiary_id C'est l'id de la transaction personnalisé...
+ * @param {string} name C'est le nom de l'utilisateur...
+ * @param {string} email C'est l'email de l'utilisateur...
+ * @param {string} phone C'est le numero de telephone de l'utilisateur...
+ * @returns {Promise<PaymentBuildResponse | undefined>}
+ */
+export const updateBeneficiary = async (
+  beneficiary_id: string,
+  name: string,
+  email: string,
+  phone: string,
+  errorHandler?: WalletErrorHandler
+): Promise<beneficiaryResponse | undefined> => {
+  try {
+    const payload: InitializeBeneficiaryPayload = {
+      channel: "cm.mobile",
+      name,
+      email,
+      phone,
+      account_number: phone,
+      country: "CM",
+      currency: "XAF",
+      type: "mobile_money",
+    };
+    const response = await notchBeneficiary(
+      METHOD.PUT,
+      beneficiary_id,
+      payload
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        `Process beneficiary failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const transfer = (await response.json()) as beneficiaryResponse;
+    console.log("Beneficiary checked:", transfer);
+    return transfer;
+  } catch (error) {
+    console.log("checking-beneficiary-error =>", error);
+    errorHandler && errorHandler(error as ApiError);
+    return undefined;
+  }
+};
+
+/**
+ * Cette fonction permet de mettre à jour un beneficiaire par son id.
+ * @param {string} name C'est le nom de l'utilisateur...
+ * @param {string} email C'est l'email de l'utilisateur...
+ * @param {string} phone C'est le numero de telephone de l'utilisateur...
+ * @returns {Promise<PaymentBuildResponse | undefined>}
+ */
+export const createBeneficiary = async (
+  name: string,
+  email: string,
+  phone: string,
+  errorHandler?: WalletErrorHandler
+): Promise<beneficiaryResponse | undefined> => {
+  try {
+    const payload: InitializeBeneficiaryPayload = {
+      channel: "cm.mobile",
+      name,
+      email,
+      phone,
+      account_number: phone,
+      country: "CM",
+      currency: "XAF",
+      type: "mobile_money",
+    };
+
+    const response = await notchBeneficiary(METHOD.POST, "", payload);
+
+    if (!response.ok) {
+      throw new Error(
+        `Process beneficiary failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const beneficiary = (await response.json()) as beneficiaryResponse;
+    console.log("Beneficiary created:", beneficiary);
+    return beneficiary;
+  } catch (error) {
+    console.log("creating-beneficiary-error =>", error);
     errorHandler && errorHandler(error as ApiError);
     return undefined;
   }

@@ -3,6 +3,7 @@ import {
   completePayment,
   listPayments,
   createTransfers,
+  createBeneficiary,
   listTransfers,
 } from "../config/notchpay.config";
 import { Create } from "../database/create";
@@ -114,19 +115,32 @@ export class WalletModel {
   }
 
   async withdraw(
-    toRefill: RefillWalletType,
+    beneficiary_id: string,
+    amount: number,
     errorHandler?: WalletErrorHandler
   ) {
     let isError = false;
-    const data = await createTransfers(
-      toRefill.transaction_number,
-      toRefill.service,
-      toRefill.amount,
-      (error) => {
-        isError = true;
-        errorHandler && errorHandler(error);
-      }
-    );
+    const data = await createTransfers(beneficiary_id, amount, (error) => {
+      isError = true;
+      errorHandler && errorHandler(error);
+    });
+    if (!isError) {
+      return data;
+    }
+    return undefined;
+  }
+
+  async createBeneficiary(
+    name: string,
+    email: string,
+    phone: string,
+    errorHandler?: WalletErrorHandler
+  ) {
+    let isError = false;
+    const data = await createBeneficiary(name, email, phone, (error) => {
+      isError = true;
+      errorHandler && errorHandler(error);
+    });
     if (!isError) {
       return data;
     }

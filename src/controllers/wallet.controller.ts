@@ -224,21 +224,62 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
   }
 
   if (!isError && reqBody && data && reqBody.amount < data.funds) {
-    const dataWithdraw = await wallet.withdraw(reqBody, (error) => {
-      isError = true;
-      console.log(
-        "wallet-withdraw-error =>",
-        error.message,
-        " on email :",
-        user.email
+    if (data.funds_id === "") {
+      let name: string =
+        user.user_metadata.firstName + " " + user.user_metadata.lastName;
+
+      console.log("wallet-user-name =>", name);
+      const beneficiary = await wallet.createBeneficiary(
+        name,
+        user.email ?? "",
+        reqBody.transaction_number,
+        (error) => {
+          console.log(
+            "wallet-create-beneficiary-error =>",
+            error.message,
+            " on email :",
+            user.email
+          );
+          errorMessage = error.message ?? "";
+        }
       );
-      errorMessage = error.message ?? "";
-    });
+      data = (await wallet.update(
+        { ...data, funds_id: beneficiary?.beneficiary.id ?? "" },
+        (error) => {
+          console.log(
+            "wallet-create-beneficiary-error =>",
+            error?.message,
+            " on email :",
+            user.email
+          );
+          errorMessage = error?.message ?? "";
+        }
+      )) as UserWalletType;
+    }
+    const dataWithdraw = await wallet.withdraw(
+      data.funds_id,
+      reqBody.amount,
+      (error) => {
+        isError = true;
+        console.log(
+          "wallet-withdraw-error =>",
+          error.message,
+          " on email :",
+          user.email
+        );
+        errorMessage = error.message ?? "";
+      }
+    );
 
     const transaction_init =
       dataWithdraw &&
       (await transactions.create(
-        { creator_id: user.id, amount: reqBody.amount, type: "withdrawal" },
+        {
+          creator_id: user.id,
+          amount: reqBody.amount,
+          transaction_id: dataWithdraw.transfer.reference,
+          type: "withdrawal",
+        },
         (error) => {
           isError = true;
           console.log(
@@ -255,7 +296,7 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
     await wallet.update(
       {
         ...data,
-        funds: data.funds - (dataWithdraw?.transfer.amount_total ?? 0),
+        funds: data.funds - (dataWithdraw?.transfer.amount ?? 0),
       },
       (error) => {
         isError = true;
@@ -455,6 +496,8 @@ export const checkWithdrawState = async (req: Request, res: Response) => {
     }
   );
 
+  console.log("data =>", data);
+
   if (!isError && data) {
     transactionState = await transactions.checkTransfer(
       data.transaction_id ?? "",
@@ -470,7 +513,7 @@ export const checkWithdrawState = async (req: Request, res: Response) => {
       // continue;
     } else if (transactionState.transfer.status == "processing") {
       // continue;
-    } else if (transactionState.transfer.status == "complete") {
+    } else if (transactionState.transfer.status == "failed") {
       // met à jour la transaction...
       await transactions.update({ ...data, status: "done" }, (error) => {
         isError = true;
