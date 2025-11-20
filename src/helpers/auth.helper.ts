@@ -43,3 +43,21 @@ export const authenticateUserByAccessToken = async (
 
   next(); // continue la chaîne des middlewares
 };
+
+// Fonction pour recuperer juste le token de l'utilisateur
+export const ExtractToken = (req: Request, res: Response) => {
+  const authHeader = req.headers.authorization;
+
+  console.log("\n");
+  console.log("authorization =>", authHeader);
+
+  if (!authHeader || !authHeader.includes("Bearer")) {
+    res.status(401).json({
+      message: "Access Unauthorized",
+      details: "Your request doesn't have a token",
+    });
+    return ""; 
+  }
+
+  return authHeader.split(" ")[1] ?? "";
+};
