@@ -2,6 +2,7 @@ import { UserModel } from "../models/user.model";
 import { Request, Response } from "express";
 import {
   changeUserPasswordType,
+  USER_TYPE,
   UserRegisterCredentials,
 } from "../types/user.type";
 import { generateOTP } from "../helpers/utils.helper";
@@ -9,22 +10,67 @@ import { OTPModel } from "../models/otp.model";
 import { UserVerificationCredentials } from "../types";
 import { User, UserMetadata } from "@supabase/supabase-js";
 import { WalletModel } from "../models/wallet.model";
+import { TransactionModel } from "../models/transactions.model";
+import { STATUS_TYPE } from "../types/wallet.type";
+import { getDetailsUserData } from "../helpers/admin.helper";
+import { ExtractToken } from "../helpers/auth.helper";
 
 // fonction qui est appelé lors de la requete et permettant de recuperer tout les users
 export const getAllUsers = async (req: Request, res: Response) => {
-  const user = new UserModel();
+  const user = (req as any).user as User;
+  const userModel = new UserModel();
+  const walletModel = new WalletModel();
+  const transactionModel = new TransactionModel();
   let response: boolean = false;
 
-  const data = await user.getAll((error) => {
-    res.status(500).send({
-      message: "Erreur lors de la récupération des Users",
-      error: error?.message,
-    });
-    response = true;
-  });
+  // Recupere tout les users...
+  const data =
+    user.user_metadata.type == USER_TYPE.ADMIN
+      ? await userModel.getAll((error) => {
+          setTimeout(async () => {
+            res.status(500).send({
+              message: "Erreur lors de la récupération des Users",
+              error: error?.message,
+            });
+          }, 2000);
+          response = true;
+        })
+      : null;
 
-  if (!response) {
-    res.status(200).json(data);
+  // Recupere tout les portes feuilles des utilisateurs...
+  const walletData =
+    user.user_metadata.type == USER_TYPE.ADMIN
+      ? await walletModel.getAll((error) => {
+          setTimeout(async () => {
+            res.status(500).send({
+              message: "Erreur lors de la récupération des Porte feuilles",
+              error: error?.message,
+            });
+          }, 2000);
+          response = true;
+        })
+      : null;
+
+  // Recuperer toutes les transactions reussies...
+  const transactionData =
+    user.user_metadata.type == USER_TYPE.ADMIN
+      ? await transactionModel.getManyByState(STATUS_TYPE.DONE, (error) => {
+          setTimeout(async () => {
+            res.status(500).send({
+              message: "Erreur lors de la récupération des Transactions",
+              error: error?.message,
+            });
+          }, 2000);
+          response = true;
+        })
+      : null;
+
+  if (!response && data && walletData && transactionData) {
+    setTimeout(async () => {
+      res
+        .status(200)
+        .json(getDetailsUserData(data, walletData, transactionData));
+    }, 2000);
   }
 };
 
@@ -50,6 +96,8 @@ export const createUser = async (req: Request, res: Response) => {
     errorMessage = error?.message ?? "";
   });
 
+  console.log(`user-created =>`, userCreated?.user.email);
+
   if (!isError) {
     const otp = generateOTP();
 
@@ -67,6 +115,7 @@ export const createUser = async (req: Request, res: Response) => {
         isError = true;
       }
     );
+    console.log(`otp-created =>`, otp, " created-at==>", datas?.created_at);
 
     const wallet_datas = await wallet_model.create(
       { uid: userCreated?.user.id },
@@ -80,6 +129,13 @@ export const createUser = async (req: Request, res: Response) => {
         );
         errorMessage = error?.message ?? "";
       }
+    );
+
+    console.log(
+      `wallet-created =>`,
+      wallet_datas?.id,
+      " created-at==>",
+      wallet_datas?.created_at
     );
 
     // Envoyer l'otp via Email...
@@ -525,6 +581,42 @@ export const loginUser = async (req: Request, res: Response) => {
   }
 };
 
+// fonction qui permet de connecter un utilisateurs
+export const logoutUser = async (req: Request, res: Response) => {
+  const userModel = new UserModel();
+  const user = (req as any).user as User;
+  const token = ExtractToken(req, res);
+  let errorMessage = "";
+
+  const datas = await userModel.signOut(user.email ?? "", token, (error) => {
+    console.log(
+      "user-signout-error =>",
+      error?.message,
+      "on email :",
+      user.email
+    );
+    errorMessage = error?.message ?? "";
+  });
+
+  if (datas) {
+    setTimeout(async () => {
+      console.log("user-logout ==>", user.email);
+      res.status(201).json({
+        message: "user has been logout...",
+        details: user.email,
+      });
+    }, 1000);
+  } else {
+    setTimeout(async () => {
+      console.log("user-logout-with-error ==>", user.email);
+      res.status(404).json({
+        message: errorMessage,
+        details: "Error when we try to logout the account.",
+      });
+    }, 1000);
+  }
+};
+
 // fonction qui permet de recuperer un utilisateur en fonction de son acces token
 export const getUserByAccessToken = async (req: Request, res: Response) => {
   const user = new UserModel();
@@ -611,7 +703,7 @@ export const updateUserInfos = async (req: Request, res: Response) => {
     if (!isError && datas) {
       setTimeout(() => {
         res.status(201).json({
-          message: "Account Infos getted...",
+          message: "Account Infos updated...",
           email: datas.email,
           data: datas.user_metadata,
         });
@@ -674,6 +766,7 @@ export const changeUserPassword = async (req: Request, res: Response) => {
           email: user.email ?? "",
           password: reqBody.new_password,
           password_confirmation: "",
+          type: "",
         },
         (error) => {
           console.log(
@@ -708,6 +801,7 @@ export const changeUserPassword = async (req: Request, res: Response) => {
 export const deleteAccount = async (req: Request, res: Response) => {
   const user = (req as any).user as User;
   const model_user = new UserModel();
+  const wallet = new WalletModel();
 
   if (!user) {
     setTimeout(() => {
@@ -719,16 +813,25 @@ export const deleteAccount = async (req: Request, res: Response) => {
   } else {
     let isError: boolean = false;
     let errorMessage = "";
-    const datas = await model_user.delete(user.email ?? "", (error) => {
+    // Il faut supprimé d'abord toutes données qui sont liées les unes aux autres pour cet user...
+    await wallet.delete(user.id, (error) => {
       isError = true;
       errorMessage = error?.message ?? "";
-      console.log("delete-user-error =>", error?.message);
+      console.log("delete-user-wallet-error =>", error?.message);
     });
+
+    const datas = !isError
+      ? await model_user.delete(user.email ?? "", (error) => {
+          isError = true;
+          errorMessage = error?.message ?? "";
+          console.log("delete-user-error =>", error?.message);
+        })
+      : null;
 
     if (!isError && datas) {
       setTimeout(() => {
         res.status(200).json({
-          message: "Account Infos getted...",
+          message: "Account Infos deleted...",
           email: datas.email,
           data: datas.user_metadata,
         });

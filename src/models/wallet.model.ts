@@ -9,6 +9,7 @@ import {
 import { Create } from "../database/create";
 import { Fetch } from "../database/fetch";
 import { Update } from "../database/update";
+import { Delete } from "../database/delete";
 import { ErrorHandler, WalletErrorHandler } from "../types/database.type";
 import { RefillWalletType, UserWalletType } from "../types/wallet.type";
 import {
@@ -22,11 +23,13 @@ export class WalletModel {
   protected fetch: Fetch;
   protected createClass: Create;
   protected updateClass: Update;
+  protected deleteClass: Delete;
 
   constructor() {
     this.fetch = new Fetch(this.name);
     this.createClass = new Create(this.name);
     this.updateClass = new Update(this.name);
+    this.deleteClass = new Delete(this.name);
   }
 
   async getAll(errorHandler?: ErrorHandler): Promise<null | UserWalletType[]> {
@@ -74,6 +77,23 @@ export class WalletModel {
         console.log(`${this.name}-error => ${error}`);
       }
     )) as UserWalletType;
+
+    if (isError) {
+      return null;
+    }
+    return data;
+  }
+
+  async delete(
+    user_id: string,
+    errorHandler?: ErrorHandler
+  ): Promise<null | UserWalletType> {
+    let isError: boolean = false;
+    const data = (await this.deleteClass.DeleteByUid(user_id, (error) => {
+      errorHandler && errorHandler(error);
+      isError = true;
+      console.log(`${this.name}-error => ${error}`);
+    })) as UserWalletType;
 
     if (isError) {
       return null;

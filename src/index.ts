@@ -8,9 +8,14 @@ import TestRouter from "./routes/test.route";
 import AuthRouter from "./routes/auth.route";
 import UserRouter from "./routes/user.route";
 import WalletRouter from "./routes/wallet.route";
+import TransactionRouter from "./routes/transaction.route";
+import AdminUserRouter from "./routes/admin-user.route";
 
-// Importation de Controlleur... Cas speciale.
-import { socketCheckPaymentState,socketCheckWithdrawState } from "./controllers/wallet.controller";
+// // Importation de Controlleur... Cas speciale.
+// import {
+//   socketCheckPaymentState,
+//   socketCheckWithdrawState,
+// } from "./controllers/wallet.controller";
 
 dotenv.config();
 const PORT = Number(process.env.PORT ?? 3500);
@@ -25,15 +30,31 @@ server.use("/api/auth", AuthRouter);
 
 // appels vers toutes les routes authentifiées...
 server.use("/api/wallet", WalletRouter);
+server.use("/api/transaction", TransactionRouter);
 server.use("/api/me", UserRouter);
+
+// appels vers toutes les routes admin...
+server.use("/api/admin/users", AdminUserRouter);
 
 // petit get Test...
 server.get("/dev", (req: Request, res: Response) => {
   res.send("Bienvenue sur le INVESTIA API...");
 });
 
-// // Action repetitive...
-// nodeCron.schedule("* * * * *", async () => {
-//   console.log("Checking Every Transactions...");
-//   // await socketCheckTransactionState();
-// });
+// Action repetitive pour controler le depot effectué...
+nodeCron.schedule("* * * * *", async () => {
+  console.log("Checking Every Deposit...");
+  // await socketCheckPaymentState();
+});
+
+// Action repetitive pour controler les retraits effectué...
+nodeCron.schedule("*/3 * * * *", async () => {
+  console.log("Checking Every Withdraw...");
+  // await socketCheckWithdrawState();
+});
+
+// Action repetitive...
+nodeCron.schedule("0 0 * * *", async () => {
+  console.log("Send email to all users...");
+  // await socketCheckTransactionState();
+});

@@ -12,11 +12,24 @@ export interface RefillWalletType {
   amount: number;
 }
 
+export enum TRANSACTION_TYPE {
+  DEPOSIT = "deposit",
+  WITHDRAWAL = "withdrawal",
+  TRANSFER = "transfer",
+}
+
+export enum STATUS_TYPE {
+  DONE = "done",
+  PENDING = "pending",
+  FAILED = "failed",
+}
+
 export interface UserWalletTransaction {
   id: number;
   transaction_id: string;
   creator_id: string;
   amount: number;
+  description: string;
   type: "deposit" | "withdrawal" | "transfer";
   status: "done" | "pending" | "failed";
   created_at: string | Date;
@@ -81,7 +94,7 @@ export interface InitializeTransferPayload {
   beneficiary: string;
   amount: number;
   currency: string;
-  channel : string;
+  channel: string;
   description: string;
 }
 
