@@ -4,7 +4,29 @@ import { authenticateUserByAccessToken } from "../helpers/auth.helper";
 
 const AdminBetRouteur = express.Router();
 
-AdminBetRouteur.get("/", authenticateUserByAccessToken, BetController.allBets);
+AdminBetRouteur.get(
+  "/", 
+  authenticateUserByAccessToken, 
+  BetController.allBets
+);
+
+AdminBetRouteur.post(
+  "/",
+  authenticateUserByAccessToken,
+  BetController.createBet
+);
+
+AdminBetRouteur.patch(
+  "/:id",
+  authenticateUserByAccessToken,
+  BetController.updateBet
+);
+
+AdminBetRouteur.delete(
+  "/:id",
+  authenticateUserByAccessToken,
+  BetController.deleteBet
+);
 
 AdminBetRouteur.get(
   "/competitions",

@@ -2,7 +2,10 @@ import { Create } from "../database/create";
 import { Delete } from "../database/delete";
 import { Fetch } from "../database/fetch";
 import { Update } from "../database/update";
-import { BetInterfaceModel } from "../types/bet.type";
+import {
+  BetInterfaceModel,
+  BetInterfaceModelDatabase,
+} from "../types/bet.type";
 import { ApiFootballErrorHandler, ErrorHandler } from "../types/database.type";
 import {
   getAllCompetitions,
@@ -41,50 +44,77 @@ export class BetModel {
       errorHandler && errorHandler(error);
       isError = true;
       console.log(`${this.name}-error => ${error}`);
-    })) as BetInterfaceModel[];
+    })) as BetInterfaceModelDatabase[];
 
-    if (isError) {
-      return null;
+    if (!isError) {
+      let datas: BetInterfaceModel[] = [];
+      data.forEach((bet) => {
+        datas.push({
+          ...bet,
+          homeTeam: JSON.parse(bet.homeTeam),
+          awayTeam: JSON.parse(bet.awayTeam),
+        });
+      });
+
+      return datas;
     }
-    return data;
+    return null;
   }
 
   async create(
-    walletForm: Partial<BetInterfaceModel>,
+    betForm: BetInterfaceModel,
     errorHandler?: ErrorHandler
   ): Promise<BetInterfaceModel | null> {
     let isError: boolean = false;
-    const data = (await this.createClass.upsert(walletForm, (error) => {
+    let betToCreate: BetInterfaceModelDatabase = {
+      ...betForm,
+      homeTeam: JSON.stringify(betForm.homeTeam),
+      awayTeam: JSON.stringify(betForm.awayTeam),
+    };
+    const data = (await this.createClass.upsert(betToCreate, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
       console.log(`${this.name}-error => ${error}`);
-    })) as BetInterfaceModel;
+    })) as BetInterfaceModelDatabase;
 
     if (isError) {
       return null;
     }
-    return data;
+    return {
+      ...data,
+      homeTeam: JSON.parse(data.homeTeam),
+      awayTeam: JSON.parse(data.awayTeam),
+    };
   }
 
   async update(
-    walletForm: BetInterfaceModel,
+    betForm: BetInterfaceModel,
     errorHandler?: ErrorHandler
   ): Promise<BetInterfaceModel | null> {
     let isError: boolean = false;
+    let betData: BetInterfaceModelDatabase = {
+      ...betForm,
+      homeTeam: JSON.stringify(betForm.homeTeam),
+      awayTeam: JSON.stringify(betForm.awayTeam),
+    };
     const data = (await this.updateClass.UpdateById(
-      String((walletForm as any).id),
-      walletForm,
+      String(betData.id),
+      betData,
       (error) => {
         errorHandler && errorHandler(error);
         isError = true;
         console.log(`${this.name}-error => ${error}`);
       }
-    )) as BetInterfaceModel;
+    )) as BetInterfaceModelDatabase;
 
     if (isError) {
       return null;
     }
-    return data;
+    return {
+      ...data,
+      homeTeam: JSON.parse(data.homeTeam),
+      awayTeam: JSON.parse(data.awayTeam),
+    };
   }
 
   async delete(
@@ -92,16 +122,20 @@ export class BetModel {
     errorHandler?: ErrorHandler
   ): Promise<null | BetInterfaceModel> {
     let isError: boolean = false;
-    const data = (await this.deleteClass.DeleteByUid(user_id, (error) => {
+    const data = (await this.deleteClass.DeleteById(user_id, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
       console.log(`${this.name}-error => ${error}`);
-    })) as BetInterfaceModel;
+    })) as BetInterfaceModelDatabase;
 
     if (isError) {
       return null;
     }
-    return data;
+    return {
+      ...data,
+      homeTeam: JSON.parse(data.homeTeam),
+      awayTeam: JSON.parse(data.awayTeam),
+    };
   }
 
   async getById(
@@ -113,12 +147,16 @@ export class BetModel {
       errorHandler && errorHandler(error);
       isError = true;
       console.log(`${this.name}-error => ${error}`);
-    })) as BetInterfaceModel;
+    })) as BetInterfaceModelDatabase;
 
     if (isError) {
       return null;
     }
-    return data;
+    return {
+      ...data,
+      homeTeam: JSON.parse(data.homeTeam),
+      awayTeam: JSON.parse(data.awayTeam),
+    };
   }
 
   async getAllCompetitions(
