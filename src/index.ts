@@ -10,6 +10,7 @@ import UserRouter from "./routes/user.route";
 import WalletRouter from "./routes/wallet.route";
 import TransactionRouter from "./routes/transaction.route";
 import AdminUserRouter from "./routes/admin-user.route";
+import AdminBetRouteur from "./routes/admin-bet.route";
 
 // // Importation de Controlleur... Cas speciale.
 // import {
@@ -35,6 +36,7 @@ server.use("/api/me", UserRouter);
 
 // appels vers toutes les routes admin...
 server.use("/api/admin/users", AdminUserRouter);
+server.use("/api/admin/bets", AdminBetRouteur);
 
 // petit get Test...
 server.get("/dev", (req: Request, res: Response) => {
