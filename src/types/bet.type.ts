@@ -34,3 +34,16 @@ export interface BetInterfaceModelDatabase {
   isActive: boolean;
   isEnded: boolean;
 }
+
+export interface UserBetInterfaceModel {
+  id?: string;
+  uid: string;
+  matchId: string | number;
+  match?: BetInterfaceModel;
+  prediction: string;
+  win?: boolean;
+  potentialGain: number;
+  potentialLoss: number;
+  isDelete: boolean;
+  created_at?: string;
+}

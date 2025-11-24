@@ -159,6 +159,32 @@ export class BetModel {
     };
   }
 
+  async getManyById(
+    idList: string[],
+    errorHandler?: ErrorHandler
+  ): Promise<null | BetInterfaceModel[]> {
+    let isError: boolean = false;
+    const data = (await this.fetch.GetManyByParameter("id", idList, (error) => {
+      errorHandler && errorHandler(error);
+      isError = true;
+      console.log(`${this.name}-error => ${error}`);
+    })) as BetInterfaceModelDatabase[];
+
+    if (!isError) {
+      let datas: BetInterfaceModel[] = [];
+      data.forEach((bet) => {
+        datas.push({
+          ...bet,
+          homeTeam: JSON.parse(bet.homeTeam),
+          awayTeam: JSON.parse(bet.awayTeam),
+        });
+      });
+
+      return datas;
+    }
+    return null;
+  }
+
   async getAllCompetitions(
     errorHandler?: ApiFootballErrorHandler
   ): Promise<null | CompetitionModel[]> {

@@ -11,6 +11,7 @@ import WalletRouter from "./routes/wallet.route";
 import TransactionRouter from "./routes/transaction.route";
 import AdminUserRouter from "./routes/admin-user.route";
 import AdminBetRouteur from "./routes/admin-bet.route";
+import BetRouteur from "./routes/bet.route";
 
 // // Importation de Controlleur... Cas speciale.
 // import {
@@ -30,9 +31,10 @@ server.use("/api/test", TestRouter);
 server.use("/api/auth", AuthRouter);
 
 // appels vers toutes les routes authentifiées...
+server.use("/api/me", UserRouter);
 server.use("/api/wallet", WalletRouter);
 server.use("/api/transaction", TransactionRouter);
-server.use("/api/me", UserRouter);
+server.use("/api/bets", BetRouteur);
 
 // appels vers toutes les routes admin...
 server.use("/api/admin/users", AdminUserRouter);

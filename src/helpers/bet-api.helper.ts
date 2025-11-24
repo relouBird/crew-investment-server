@@ -1,3 +1,5 @@
+import { BetInterfaceModel } from "../types/bet.type";
+
 export function getDateRange() {
   const today = new Date();
   const nextWeek = new Date();
@@ -14,4 +16,20 @@ export function getDateRange() {
     dateFrom: format(today),
     dateTo: format(nextWeek),
   };
+}
+
+export function orderBetMatch(betMatches: BetInterfaceModel[]) {
+  let matches: BetInterfaceModel[] = [];
+
+  betMatches.forEach((match) => {
+    if (match.isActive && !match.isEnded) {
+      matches.push({
+        ...match,
+        score: "",
+        winner: "",
+      });
+    }
+  });
+
+  return matches;
 }
