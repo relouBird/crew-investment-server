@@ -123,4 +123,66 @@ export class UserBetModel {
     }
     return data;
   }
+
+  async getBetsByIdMatch(
+    matchId: string,
+    errorHandler?: ErrorHandler
+  ): Promise<null | UserBetInterfaceModel[]> {
+    let isError: boolean = false;
+    const data = (await this.fetch.GetAllByParameter(
+      "matchId",
+      matchId,
+      (error) => {
+        errorHandler && errorHandler(error);
+        isError = true;
+        console.log(`${this.name}-error => ${error}`);
+      }
+    )) as UserBetInterfaceModel[];
+
+    if (!isError) {
+      return data;
+    }
+    return null;
+  }
+
+  async getBetsByPaymentState(
+    errorHandler?: ErrorHandler
+  ): Promise<null | UserBetInterfaceModel[]> {
+    let isError: boolean = false;
+    const data = (await this.fetch.GetAllByParameter(
+      "isPayed",
+      "FALSE",
+      (error) => {
+        errorHandler && errorHandler(error);
+        isError = true;
+        console.log(`${this.name}-error => ${error}`);
+      }
+    )) as UserBetInterfaceModel[];
+
+    if (!isError) {
+      return data.filter((bet) => bet.win != null && bet.win != undefined);
+    }
+    return null;
+  }
+
+  async getBetsByIdListMatch(
+    matchIdList: string[],
+    errorHandler?: ErrorHandler
+  ): Promise<null | UserBetInterfaceModel[]> {
+    let isError: boolean = false;
+    const data = (await this.fetch.GetManyByParameter(
+      "matchId",
+      matchIdList,
+      (error) => {
+        errorHandler && errorHandler(error);
+        isError = true;
+        console.log(`${this.name}-error => ${error}`);
+      }
+    )) as UserBetInterfaceModel[];
+
+    if (!isError) {
+      return data;
+    }
+    return null;
+  }
 }

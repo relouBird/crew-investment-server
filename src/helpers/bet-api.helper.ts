@@ -18,7 +18,7 @@ export function getDateRange() {
   };
 }
 
-export function orderBetMatch(betMatches: BetInterfaceModel[]) {
+export function orderBetMatch(betMatches: BetInterfaceModel[], get?: boolean) {
   let matches: BetInterfaceModel[] = [];
 
   betMatches.forEach((match) => {
@@ -28,8 +28,24 @@ export function orderBetMatch(betMatches: BetInterfaceModel[]) {
         score: "",
         winner: "",
       });
+    } else {
+      if (get) {
+        matches.push(match);
+      }
     }
   });
 
   return matches;
+}
+
+export function orderOneBetMatch(betMatches: BetInterfaceModel) {
+  if (betMatches.isActive && !betMatches.isEnded) {
+    return {
+      ...betMatches,
+      score: "",
+      winner: "",
+    };
+  } else {
+    return betMatches;
+  }
 }

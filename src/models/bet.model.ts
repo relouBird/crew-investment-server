@@ -43,7 +43,7 @@ export class BetModel {
     const data = (await this.fetch.GetAll((error) => {
       errorHandler && errorHandler(error);
       isError = true;
-      console.log(`${this.name}-error => ${error}`);
+      console.log(`${this.name}-error => ${error?.message}`);
     })) as BetInterfaceModelDatabase[];
 
     if (!isError) {
@@ -74,7 +74,7 @@ export class BetModel {
     const data = (await this.createClass.upsert(betToCreate, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
-      console.log(`${this.name}-error => ${error}`);
+      console.log(`${this.name}-error => ${error?.message}`);
     })) as BetInterfaceModelDatabase;
 
     if (isError) {
@@ -103,7 +103,7 @@ export class BetModel {
       (error) => {
         errorHandler && errorHandler(error);
         isError = true;
-        console.log(`${this.name}-error => ${error}`);
+      console.log(`${this.name}-error => ${error?.message}`);
       }
     )) as BetInterfaceModelDatabase;
 
@@ -125,7 +125,7 @@ export class BetModel {
     const data = (await this.deleteClass.DeleteById(user_id, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
-      console.log(`${this.name}-error => ${error}`);
+      console.log(`${this.name}-error => ${error?.message}`);
     })) as BetInterfaceModelDatabase;
 
     if (isError) {
@@ -146,7 +146,7 @@ export class BetModel {
     const data = (await this.fetch.GetById(id, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
-      console.log(`${this.name}-error => ${error}`);
+      console.log(`${this.name}-error => ${error?.message}`);
     })) as BetInterfaceModelDatabase;
 
     if (isError) {
@@ -167,7 +167,32 @@ export class BetModel {
     const data = (await this.fetch.GetManyByParameter("id", idList, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
-      console.log(`${this.name}-error => ${error}`);
+      console.log(`${this.name}-error => ${error?.message}`);
+    })) as BetInterfaceModelDatabase[];
+
+    if (!isError) {
+      let datas: BetInterfaceModel[] = [];
+      data.forEach((bet) => {
+        datas.push({
+          ...bet,
+          homeTeam: JSON.parse(bet.homeTeam),
+          awayTeam: JSON.parse(bet.awayTeam),
+        });
+      });
+
+      return datas;
+    }
+    return null;
+  }
+
+  async getManyActiveState(
+    errorHandler?: ErrorHandler
+  ): Promise<null | BetInterfaceModel[]> {
+    let isError: boolean = false;
+    const data = (await this.fetch.GetAllByParameter("isActive", "TRUE", (error) => {
+      errorHandler && errorHandler(error);
+      isError = true;
+      console.log(`${this.name}-error => ${error?.message}`);
     })) as BetInterfaceModelDatabase[];
 
     if (!isError) {

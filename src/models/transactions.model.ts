@@ -1,7 +1,4 @@
-import {
-  checkPayment,
-  checkTransfers,
-} from "../config/notchpay.config";
+import { checkPayment, checkTransfers } from "../config/notchpay.config";
 import { PaymentResponse, TransferResponse } from "notchpay-api";
 import { gmail_transporter, transporter } from "../config/email.config";
 import { Create } from "../database/create";
@@ -17,17 +14,20 @@ import {
   UserWalletTransaction,
   UserWalletType,
 } from "../types/wallet.type";
+import { Delete } from "../database/delete";
 
 export class TransactionModel {
   protected name: string = "wallets-transactions";
   protected fetch: Fetch;
   protected createClass: Create;
   protected updateClass: Update;
+  protected deleteClass: Delete;
 
   constructor() {
     this.fetch = new Fetch(this.name);
     this.createClass = new Create(this.name);
     this.updateClass = new Update(this.name);
+    this.deleteClass = new Delete(this.name);
   }
 
   async getAll(
@@ -208,6 +208,23 @@ export class TransactionModel {
   ): Promise<null | UserWalletType> {
     let isError: boolean = false;
     const data = (await this.fetch.GetById(id, (error) => {
+      errorHandler && errorHandler(error);
+      isError = true;
+      console.log(`${this.name}-error => ${error}`);
+    })) as UserWalletType;
+
+    if (isError) {
+      return null;
+    }
+    return data;
+  }
+
+  async delete(
+    id: string,
+    errorHandler?: ErrorHandler
+  ): Promise<null | UserWalletType> {
+    let isError: boolean = false;
+    const data = (await this.deleteClass.DeleteById(id, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
       console.log(`${this.name}-error => ${error}`);

@@ -13,11 +13,9 @@ import AdminUserRouter from "./routes/admin-user.route";
 import AdminBetRouteur from "./routes/admin-bet.route";
 import BetRouteur from "./routes/bet.route";
 
-// // Importation de Controlleur... Cas speciale.
-// import {
-//   socketCheckPaymentState,
-//   socketCheckWithdrawState,
-// } from "./controllers/wallet.controller";
+// Importation des sockets
+import { betChecker } from "./sockets/bet.socket";
+import { usersBetChecker } from "./sockets/transaction.socket";
 
 dotenv.config();
 const PORT = Number(process.env.PORT ?? 3500);
@@ -45,20 +43,32 @@ server.get("/dev", (req: Request, res: Response) => {
   res.send("Bienvenue sur le INVESTIA API...");
 });
 
-// Action repetitive pour controler le depot effectué...
+// Action repetitive pour voir tous les paris...
 nodeCron.schedule("* * * * *", async () => {
-  console.log("Checking Every Deposit...");
-  // await socketCheckPaymentState();
+  console.log("Checking Every Bets...");
+  await betChecker();
 });
 
-// Action repetitive pour controler les retraits effectué...
-nodeCron.schedule("*/3 * * * *", async () => {
-  console.log("Checking Every Withdraw...");
-  // await socketCheckWithdrawState();
+// Action repetitive pour checker tous les paris...
+nodeCron.schedule("*/2 * * * *", async () => {
+  console.log("Checking Transactions On Bets...");
+  await usersBetChecker();
 });
 
-// Action repetitive...
-nodeCron.schedule("0 0 * * *", async () => {
-  console.log("Send email to all users...");
-  // await socketCheckTransactionState();
-});
+// // Action repetitive pour controler le depot effectué...
+// nodeCron.schedule("* * * * *", async () => {
+//   console.log("Checking Every Deposit...");
+//   // await socketCheckPaymentState();
+// });
+
+// // Action repetitive pour controler les retraits effectué...
+// nodeCron.schedule("*/3 * * * *", async () => {
+//   console.log("Checking Every Withdraw...");
+//   // await socketCheckWithdrawState();
+// });
+
+// // Action repetitive...
+// nodeCron.schedule("0 0 * * *", async () => {
+//   console.log("Send email to all users...");
+//   // await socketCheckTransactionState();
+// });

@@ -22,11 +22,14 @@ export const allBets = async (req: Request, res: Response) => {
     data && data.length ? data.map((u) => String(u.matchId)) : [];
 
   if (listMatchToLoad.length) {
+    console.log("list-matches ===>", listMatchToLoad.length);
     matchesData = await matchModel.getManyById(listMatchToLoad, (error) => {
       isError = true;
       console.log("matches-getting-error =>", error?.message);
       errorMessage = error?.message ?? "";
     });
+
+    matchesData = matchesData ? orderBetMatch(matchesData, true) : [];
   }
 
   if (!isError && data) {

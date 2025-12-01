@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { User } from "@supabase/supabase-js";
 import { BetModel } from "../models/bet.model";
 import { BetInterfaceModel } from "../types/bet.type";
+import { UserBetModel } from "../models/user-bet.model";
 
 // fonction qui est appelé afin de recuperer tous les paris des utilisateurs...
 export const allBets = async (req: Request, res: Response) => {
@@ -94,7 +94,7 @@ export const deleteBet = async (req: Request, res: Response) => {
   }
 };
 
-// fonction qui est appelé afin de supprimer un pari...
+// fonction qui est appelé afin de mettre à jour un pari...
 export const updateBet = async (req: Request, res: Response) => {
   const betModel = new BetModel();
   let isError = false;
@@ -115,6 +115,63 @@ export const updateBet = async (req: Request, res: Response) => {
       res.status(200).json({
         message: "Bets Updated successfully...",
         data,
+      });
+    }, 2000);
+  } else {
+    setTimeout(async () => {
+      res.status(404).json({
+        message: "Error when updating bet...",
+        details: errorMessage,
+      });
+    }, 1000);
+  }
+};
+
+// fonction qui est appelé afin de supprimer un pari...
+export const endBet = async (req: Request, res: Response) => {
+  const betModel = new BetModel();
+  const userBetModel = new UserBetModel();
+  let isError = false;
+  const bet_id = req.params.id ?? ""; // Ce type...
+  const reqBody = req.body as BetInterfaceModel; // Ce type...
+  let errorMessage = "";
+
+  console.log("bet-id ===>", bet_id);
+
+  const ended_bet = await betModel.update(
+    { ...reqBody, isEnded: true, isActive: false },
+    (error) => {
+      isError = true;
+      console.log("bets-ending-error =>", error?.message);
+      errorMessage = error?.message ?? "";
+    }
+  );
+
+  const usersBet =
+    ended_bet &&
+    (await userBetModel.getBetsByIdMatch(String(ended_bet.id), (error) => {
+      isError = true;
+      console.log("bets-instance-error =>", error?.message);
+      errorMessage = error?.message ?? "";
+    }));
+
+  if (usersBet) {
+    for (let i = 0; i < usersBet.length; i++) {
+      const activeBet = usersBet[i];
+      let win = activeBet.prediction === ended_bet.winner;
+      userBetModel.update({ ...activeBet, win }, (error) => {
+        isError = true;
+        console.log("bets-instance-update-error =>", error?.message);
+        errorMessage = error?.message ?? "";
+      });
+    }
+  }
+
+  if (!isError && ended_bet && usersBet) {
+    setTimeout(async () => {
+      res.status(200).json({
+        message: "Bets Updated successfully...",
+        data: ended_bet,
       });
     }, 2000);
   } else {

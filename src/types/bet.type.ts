@@ -45,5 +45,6 @@ export interface UserBetInterfaceModel {
   potentialGain: number;
   potentialLoss: number;
   isDelete: boolean;
+  isPayed: boolean;
   created_at?: string;
 }
