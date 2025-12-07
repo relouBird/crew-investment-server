@@ -342,6 +342,7 @@ export class DatabaseUser {
 
     return users;
   }
+  
 
   /**
    * Cette fonction permet de recuperer un Utilisateur comme Admin

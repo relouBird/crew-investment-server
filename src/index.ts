@@ -12,6 +12,7 @@ import TransactionRouter from "./routes/transaction.route";
 import AdminUserRouter from "./routes/admin-user.route";
 import AdminBetRouteur from "./routes/admin-bet.route";
 import BetRouteur from "./routes/bet.route";
+import SponsoringRouter from "./routes/sponsoring.route";
 
 // Importation des sockets
 import { betChecker } from "./sockets/bet.socket";
@@ -33,6 +34,7 @@ server.use("/api/me", UserRouter);
 server.use("/api/wallet", WalletRouter);
 server.use("/api/transaction", TransactionRouter);
 server.use("/api/bets", BetRouteur);
+server.use("/api/sponsoring", SponsoringRouter);
 
 // appels vers toutes les routes admin...
 server.use("/api/admin/users", AdminUserRouter);

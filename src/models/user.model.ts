@@ -18,9 +18,58 @@ export class UserModel {
     this.user = new DatabaseUser(this.name);
   }
 
+  /*
+  Lire la documentation sur la classe de la base données User
+  */
   async getAll(errorHandler?: AuthErrorHandler): Promise<null | User[]> {
     let isError: boolean = false;
     const data = await this.user.getAllAsAdmin((error) => {
+      errorHandler && errorHandler(error);
+      isError = true;
+      console.log(`${this.name}-error => ${error}`);
+    });
+
+    if (isError) {
+      return null;
+    }
+    return data;
+  }
+
+  /*
+  Lire la documentation sur la classe de la base données User
+  */
+  async getAllByList(
+    idList: string[],
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User[]> {
+    let isError: boolean = false;
+    const datas: User[] = [];
+
+    idList.forEach(async (user_id) => {
+      const data = await this.user.getUserAsAdmin(user_id, (error) => {
+        errorHandler && errorHandler(error);
+        isError = true;
+        console.log(`${this.name}-error => ${error}`);
+      });
+
+      data && datas.push(data);
+    });
+
+    if (isError) {
+      return null;
+    }
+    return datas;
+  }
+
+  /*
+  Lire la documentation sur la classe de la base données User
+  */
+  async getById(
+    id: string,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    let isError: boolean = false;
+    const data = await this.user.getUserAsAdmin(id, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
       console.log(`${this.name}-error => ${error}`);
