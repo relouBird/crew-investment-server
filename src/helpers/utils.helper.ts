@@ -571,7 +571,6 @@ export function GenerateThanksEmail(
 </html>`;
 }
 
-
 export function GenerateFailEmail(
   transaction_id: string,
   isOnline?: boolean

@@ -4,11 +4,13 @@ import { TransactionModel } from "../models/transactions.model";
 import { WalletModel } from "../models/wallet.model";
 import { UserWalletTransaction, UserWalletType } from "../types/wallet.type";
 import { TransferResponse, PaymentResponse } from "notchpay-api";
+import { USER_TYPE } from "../types/user.type";
 
 // fonction qui est appelé afin de recuperer toutes les transactions des utilisateurs...
 export const allTransactions = async (req: Request, res: Response) => {
   const transactions = new TransactionModel();
   let isError = false;
+  const user = (req as any).user as User;
   let errorMessage = "";
 
   const data = await transactions.getAll((error) => {
@@ -18,12 +20,28 @@ export const allTransactions = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Transaction Checked...",
-        data,
+    if (user.user_metadata.type == USER_TYPE.ADMIN) {
+      setTimeout(async () => {
+        res.status(200).json({
+          message: "Transaction Checked...",
+          data,
+        });
+      }, 1000);
+    } else {
+      let userTransactionsData: UserWalletTransaction[] = [];
+      data.forEach((trans) => {
+        if (trans.creator_id == user.id) {
+          userTransactionsData.push(trans);
+        }
       });
-    }, 1000);
+
+      setTimeout(async () => {
+        res.status(200).json({
+          message: "Transaction Checked...",
+          data: userTransactionsData,
+        });
+      }, 1000);
+    }
   } else {
     setTimeout(async () => {
       res.status(404).json({
@@ -35,7 +53,7 @@ export const allTransactions = async (req: Request, res: Response) => {
 };
 
 // fonction qui est appelé afin de creer une transaction...
-export const createTransaction = async (req: Request, res: Response) => {}
+export const createTransaction = async (req: Request, res: Response) => {};
 
 // fonction qui est appelé pour verifier si la transaction a été effectué et permet de la conclure si oui...
 export const checkTransactionState = async (req: Request, res: Response) => {

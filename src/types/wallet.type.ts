@@ -16,6 +16,8 @@ export enum TRANSACTION_TYPE {
   DEPOSIT = "deposit",
   WITHDRAWAL = "withdrawal",
   TRANSFER = "transfer",
+  GAIN = "bet_win",
+  LOSS = "bet_loss",
 }
 
 export enum STATUS_TYPE {
@@ -30,7 +32,7 @@ export interface UserWalletTransaction {
   creator_id: string;
   amount: number;
   description: string;
-  type: "deposit" | "withdrawal" | "transfer";
+  type: "deposit" | "withdrawal" | "transfer" | "bet_win" | "bet_loss";
   status: "done" | "pending" | "failed";
   created_at: string | Date;
 }

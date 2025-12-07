@@ -14,6 +14,7 @@ import { TransactionModel } from "../models/transactions.model";
 import { STATUS_TYPE } from "../types/wallet.type";
 import { getDetailsUserData } from "../helpers/admin.helper";
 import { ExtractToken } from "../helpers/auth.helper";
+import { SponsoringModel } from "../models/sponsoring.model";
 
 // fonction qui est appelé lors de la requete et permettant de recuperer tout les users
 export const getAllUsers = async (req: Request, res: Response) => {
@@ -163,7 +164,9 @@ export const createParrainedUser = async (req: Request, res: Response) => {
   const user = new UserModel();
   const otp_class = new OTPModel();
   const wallet_model = new WalletModel();
+  const sponsoringModel = new SponsoringModel();
   const data = req.body as UserRegisterCredentials;
+  const creator_id = req.params.id ?? ""; // Ce type...
   let isError = false;
   let errorMessage = "";
 
@@ -214,6 +217,16 @@ export const createParrainedUser = async (req: Request, res: Response) => {
 
     // Envoyer l'otp via Email...
     await otp_class.sendOTPViaMail(otp, data.email);
+
+    // Voici la partie qui gère le me partenariat...
+    await sponsoringModel.create(
+      {
+        sponsor_id: creator_id,
+        sponsored_id: userCreated?.user.id ?? "",
+        firstDeposit: false,
+      },
+      (error) => {}
+    );
 
     setTimeout(async () => {
       res.status(201).json({
