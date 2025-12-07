@@ -98,13 +98,13 @@ export class TransactionModel {
       //   html: GenerateThanksEmail(funds_added, transaction_id),
       // });
 
-      // // Envoyer l’email OTP EN PROD AVEC GMAIL
-      // const data = await gmail_transporter.sendMail({
-      //   from: "noreply@investia.com",
-      //   to: email,
-      //   subject: "Compte Rechargé avec Succès...",
-      //   html: GenerateThanksEmail(funds_added, transaction_id, true),
-      // });
+      // Envoyer l’email OTP EN PROD AVEC GMAIL
+      const data = await gmail_transporter.sendMail({
+        from: "noreply@investia.com",
+        to: email,
+        subject: "Compte Rechargé avec Succès...",
+        html: GenerateThanksEmail(funds_added, transaction_id, true),
+      });
 
       //   console.log("Email envoyé:", data);
     } catch (error) {
@@ -114,21 +114,21 @@ export class TransactionModel {
 
   async failConfirmationMail(email: string, transaction_id: string) {
     try {
-      // Envoyer l’email OTP EN DEVVVVV
-      await transporter.sendMail({
-        from: "noreply@investia.com",
-        to: email,
-        subject: "Echec de la transaction...",
-        html: GenerateFailEmail(transaction_id, false),
-      });
-
       // // Envoyer l’email OTP EN DEVVVVV
-      // const data = await gmail_transporter.sendMail({
+      // await transporter.sendMail({
       //   from: "noreply@investia.com",
       //   to: email,
       //   subject: "Echec de la transaction...",
-      //   html: GenerateFailEmail(transaction_id, true),
+      //   html: GenerateFailEmail(transaction_id, false),
       // });
+
+      // Envoyer l’email OTP EN DEVVVVV
+      const data = await gmail_transporter.sendMail({
+        from: "noreply@investia.com",
+        to: email,
+        subject: "Echec de la transaction...",
+        html: GenerateFailEmail(transaction_id, true),
+      });
 
       //   console.log("Email envoyé:", data);
     } catch (error) {
