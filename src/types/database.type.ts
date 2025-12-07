@@ -1,4 +1,5 @@
 import { AuthError, PostgrestError } from "@supabase/supabase-js";
+import { ApiFootballErrorResponse } from "./api-bet.type";
 
 export interface MesombError {
   detail: string;
@@ -21,6 +22,15 @@ export interface MesombError {
   support: string;
 }
 
+export type ApiError = {
+  status: number; // code HTTP : 400, 401, 404, 500...
+  code: string; // code interne ex: "invalid_currency", "auth_failed"
+  message: string; // description lisible de l’erreur
+  details?: Record<string, any>; // infos optionnelles (ex: champ en erreur)
+};
+
 export type ErrorHandler = (error: PostgrestError | null) => void;
 export type MesombErrorHandler = (error: MesombError | null) => void;
 export type AuthErrorHandler = (error: AuthError | null) => void;
+export type WalletErrorHandler = (error: ApiError) => void;
+export type ApiFootballErrorHandler = (error: ApiFootballErrorResponse) => void;

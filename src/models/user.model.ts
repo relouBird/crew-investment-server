@@ -4,7 +4,7 @@ import { DatabaseUser } from "../database/user";
 import { AuthErrorHandler, ErrorHandler } from "../types/database.type";
 import {
   AuthData,
-  Credentials,
+  SignInCredentials,
   UserRegisterCredentials,
 } from "../types/user.type";
 
@@ -18,9 +18,58 @@ export class UserModel {
     this.user = new DatabaseUser(this.name);
   }
 
-  async getAll(errorHandler?: ErrorHandler): Promise<null | any[]> {
+  /*
+  Lire la documentation sur la classe de la base données User
+  */
+  async getAll(errorHandler?: AuthErrorHandler): Promise<null | User[]> {
     let isError: boolean = false;
-    const data = await this.fetch.GetAll((error) => {
+    const data = await this.user.getAllAsAdmin((error) => {
+      errorHandler && errorHandler(error);
+      isError = true;
+      console.log(`${this.name}-error => ${error}`);
+    });
+
+    if (isError) {
+      return null;
+    }
+    return data;
+  }
+
+  /*
+  Lire la documentation sur la classe de la base données User
+  */
+  async getAllByList(
+    idList: string[],
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User[]> {
+    let isError: boolean = false;
+    const datas: User[] = [];
+
+    idList.forEach(async (user_id) => {
+      const data = await this.user.getUserAsAdmin(user_id, (error) => {
+        errorHandler && errorHandler(error);
+        isError = true;
+        console.log(`${this.name}-error => ${error}`);
+      });
+
+      data && datas.push(data);
+    });
+
+    if (isError) {
+      return null;
+    }
+    return datas;
+  }
+
+  /*
+  Lire la documentation sur la classe de la base données User
+  */
+  async getById(
+    id: string,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    let isError: boolean = false;
+    const data = await this.user.getUserAsAdmin(id, (error) => {
       errorHandler && errorHandler(error);
       isError = true;
       console.log(`${this.name}-error => ${error}`);
@@ -90,7 +139,7 @@ export class UserModel {
   Lire la documentation sur la classe de la base données User
   */
   async signIn(
-    credentials: Credentials,
+    credentials: SignInCredentials,
     errorHandler?: AuthErrorHandler
   ): Promise<null | AuthData> {
     let isError = false;
@@ -102,6 +151,22 @@ export class UserModel {
       return data;
     }
     return null;
+  }
+
+  /*
+  Lire la documenttion sur la classe de la base données User
+  */
+  async signOut(
+    email: string,
+    token: string,
+    errorHandler?: AuthErrorHandler
+  ): Promise<boolean> {
+    let isError = false;
+    const data = await this.user.signOut(email, token, (error) => {
+      errorHandler && errorHandler(error);
+      isError = true;
+    });
+    return data;
   }
 
   /*

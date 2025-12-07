@@ -1,11 +1,20 @@
 import * as UserController from "../controllers/user.controller";
 import express from "express";
+import { authenticateUserByAccessToken } from "../helpers/auth.helper";
 
 const AuthRouter = express.Router();
 
 AuthRouter.post("/register", UserController.createUser);
 
+AuthRouter.post("/register/:id", UserController.createParrainedUser);
+
 AuthRouter.post("/login", UserController.loginUser);
+
+AuthRouter.post(
+  "/logout",
+  authenticateUserByAccessToken,
+  UserController.logoutUser
+);
 
 AuthRouter.post("/verify-otp", UserController.verifyOTPUser);
 

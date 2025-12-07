@@ -10,6 +10,12 @@ WalletRouter.get(
   WalletController.getAccountDetails
 );
 
+WalletRouter.get(
+  "/all",
+  authenticateUserByAccessToken,
+  WalletController.allWallets
+);
+
 WalletRouter.post(
   "/refill-account",
   authenticateUserByAccessToken,
@@ -20,24 +26,6 @@ WalletRouter.post(
   "/withdraw-account",
   authenticateUserByAccessToken,
   WalletController.withdrawalAccount
-);
-
-WalletRouter.get(
-  "/check-transaction/:id",
-  authenticateUserByAccessToken,
-  WalletController.checkTransactionState
-);
-
-WalletRouter.get(
-  "/all/wallets",
-  authenticateUserByAccessToken,
-  WalletController.allWallets
-);
-
-WalletRouter.get(
-  "/all/transactions",
-  authenticateUserByAccessToken,
-  WalletController.allTransactions
 );
 
 export default WalletRouter;

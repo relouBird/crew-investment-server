@@ -5,8 +5,12 @@ import { AuthErrorHandler } from "../types/database.type";
 import {
   AuthData,
   Credentials,
+  SignInCredentials,
   SubscriptionObject,
+  USER_STATUS,
+  USER_TYPE,
   UserRegisterCredentials,
+  UserSimpleCredentials,
 } from "../types/user.type";
 import { SupabaseAuthClient } from "@supabase/supabase-js/dist/module/lib/SupabaseAuthClient";
 
@@ -112,6 +116,8 @@ export class DatabaseUser {
         generatedId: "USR" + rand,
         email: credentials.email,
         phone: "",
+        type: credentials.type,
+        status: USER_STATUS.AWAITING,
         country: "",
         notifications: {
           email: true,
@@ -135,25 +141,66 @@ export class DatabaseUser {
 
   /**
    * Cette Fonction permet de se connecter à un utilisateur
-   * @param {UserLoginCredentials} credentials - ce sont les données de l'utilisateurs
+   * @param {SignInCredentials} credentials - ce sont les données de l'utilisateurs
    * @param {AuthErrorHandler} errorHandler  - ceci est la fonction qui prend en parametre l'erreur et qui permet de la gerer
    * @returns {Promise<null | AuthData>}
    */
   async signIn(
-    credentials: Credentials,
+    credentials: SignInCredentials,
     errorHandler?: AuthErrorHandler
   ): Promise<null | AuthData> {
-    const { data, error } = await this.auth.signInWithPassword({
+    const { data, error: signInError } = await this.auth.signInWithPassword({
       email: credentials.email ?? "default@gmail.com",
       password: credentials.password,
     });
 
-    if (error) {
-      errorHandler && errorHandler(error);
+    let user = await this.getUser(credentials.email ?? "default@gmail.com");
+
+    const { data: userData, error: updateError } =
+      await this.auth_admin.updateUserById(user?.id ?? "", {
+        user_metadata: {
+          status: USER_STATUS.ACTIVE,
+        },
+      });
+
+    if (signInError || updateError) {
+      errorHandler && errorHandler(signInError ?? updateError);
       return null;
     }
 
     return data as AuthData;
+  }
+
+  /**
+   * Cette Fonction permet de se connecter à un utilisateur
+   * @param {SignInCredentials} credentials - ce sont les données de l'utilisateurs
+   * @param {AuthErrorHandler} errorHandler  - ceci est la fonction qui prend en parametre l'erreur et qui permet de la gerer
+   * @returns {boolean}
+   */
+  async signOut(
+    email: string,
+    token: string,
+    errorHandler?: AuthErrorHandler
+  ): Promise<boolean> {
+    let user = await this.getUser(email ?? "default@gmail.com");
+
+    const { error: signInError } = await this.auth_admin.signOut(token);
+
+    const { error: updateError } = await this.auth_admin.updateUserById(
+      user?.id ?? "",
+      {
+        user_metadata: {
+          status: USER_STATUS.INACTIVE,
+        },
+      }
+    );
+
+    if (signInError || updateError) {
+      errorHandler && errorHandler(signInError ?? updateError);
+      return false;
+    }
+
+    return true;
   }
 
   /**
@@ -269,6 +316,142 @@ export class DatabaseUser {
     }
 
     console.log("Password updated successfully =>", data);
+    return data.user;
+  }
+
+  /// --------------------------------------------------------------------------------------------
+  /// ------------------Cette partie concerne les actions en tant que admin-----------------------
+  /// --------------------------------------------------------------------------------------------
+
+  /**
+   * Cette fonction permet de recuperer les Utilisateurs comme Admin
+   * @param {UserLoginCredentials} credentials - ce sont les données de l'utilisateurs
+   * @param {AuthErrorHandler} errorHandler  - ceci est la fonction qui prend en parametre l'erreur et qui permet de la gerer
+   * @returns {Promise<[] | User[]>}
+   */
+  async getAllAsAdmin(errorHandler?: AuthErrorHandler): Promise<[] | User[]> {
+    const {
+      data: { users },
+      error,
+    } = await this.auth_admin.listUsers();
+
+    if (error) {
+      errorHandler && errorHandler(error);
+      return [];
+    }
+
+    return users;
+  }
+  
+
+  /**
+   * Cette fonction permet de recuperer un Utilisateur comme Admin
+   * @param {string} id - c'est l'identifiant de l'utilisateurs
+   * @param {AuthErrorHandler} errorHandler  - ceci est la fonction qui prend en parametre l'erreur et qui permet de la gerer
+   * @returns {Promise<null | User>}
+   */
+  async getUserAsAdmin(
+    id: string,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    const { data, error } = await this.auth_admin.getUserById(id);
+
+    if (error) {
+      errorHandler && errorHandler(error);
+      return null;
+    }
+
+    return data.user;
+  }
+
+  /**
+   * Cette fonction permet de creer un Utilisateur comme Admin
+   * @param {UserLoginCredentials} credentials - ce sont les données de l'utilisateurs
+   * @param {AuthErrorHandler} errorHandler  - ceci est la fonction qui prend en parametre l'erreur et qui permet de la gerer
+   * @returns {Promise<null | AuthData>}
+   */
+  async createAsAdmin(
+    credentials: UserSimpleCredentials,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    const rand = Math.round(Math.random() * 100000);
+    const { data, error } = await this.auth_admin.createUser({
+      email: credentials.email,
+      password: credentials.firstName + credentials.lastName + "@123",
+      user_metadata: {
+        firstName: credentials.firstName,
+        lastName: credentials.lastName,
+        generatedId: "USR" + rand,
+        email: credentials.email,
+        phone: credentials.phone,
+        type: USER_TYPE.GUEST,
+        status: USER_STATUS.AWAITING,
+        country: "",
+        notifications: {
+          email: true,
+          push: true,
+          betResults: true,
+          promotions: false,
+        },
+        twoFactorEnabled: false,
+      },
+      email_confirm: true,
+      phone_confirm: true,
+    });
+
+    if (error) {
+      errorHandler && errorHandler(error);
+      return null;
+    }
+
+    return data.user;
+  }
+
+  /**
+   * Cette fonction permet de mettre à jour un Utilisateur comme Admin
+   * @param {UserSimpleCredentials} credentials - ce sont les données de l'utilisateurs
+   * @param {AuthErrorHandler} errorHandler  - ceci est la fonction qui prend en parametre l'erreur et qui permet de la gerer
+   * @returns {Promise<null | AuthData>}
+   */
+  async updateAsAdmin(
+    credentials: UserSimpleCredentials,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    const { data, error } = await this.auth_admin.updateUserById(
+      credentials.id ?? "",
+      {
+        password: credentials.firstName + credentials.lastName + "@123",
+        user_metadata: {
+          firstName: credentials.firstName,
+          lastName: credentials.lastName,
+          phone: credentials.phone,
+        },
+      }
+    );
+
+    if (error) {
+      errorHandler && errorHandler(error);
+      return null;
+    }
+    return data.user;
+  }
+
+  /**
+   * Cette fonction permet de supprimer un Utilisateur comme Admin
+   * @param {string} uid - ce sont les données de l'utilisateurs
+   * @param {AuthErrorHandler} errorHandler  - ceci est la fonction qui prend en parametre l'erreur et qui permet de la gerer
+   * @returns {Promise<null | User>}
+   */
+  async deleteAsAdmin(
+    uid: string,
+    errorHandler?: AuthErrorHandler
+  ): Promise<null | User> {
+    const { data, error } = await this.auth_admin.deleteUser(uid);
+
+    if (error) {
+      errorHandler && errorHandler(error);
+      return null;
+    }
     return data.user;
   }
 }
