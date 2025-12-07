@@ -154,20 +154,27 @@ export class DatabaseUser {
       password: credentials.password,
     });
 
+    if (signInError) {
+      errorHandler && errorHandler(signInError);
+      return null;
+    }
+
     let user = await this.getUser(credentials.email ?? "default@gmail.com");
 
-    if (user) {
-      const { data: userData, error: updateError } =
-        await this.auth_admin.updateUserById(user?.id ?? "", {
-          user_metadata: {
-            status: USER_STATUS.ACTIVE,
-          },
-        });
+    if (!user) {
+      return null;
+    }
 
-      if (signInError || updateError) {
-        errorHandler && errorHandler(signInError ?? updateError);
-        return null;
-      }
+    const { data: userData, error: updateError } =
+      await this.auth_admin.updateUserById(user?.id ?? "", {
+        user_metadata: {
+          status: USER_STATUS.ACTIVE,
+        },
+      });
+
+    if (updateError) {
+      errorHandler && errorHandler(updateError);
+      return null;
     }
 
     return data as AuthData;
@@ -188,20 +195,18 @@ export class DatabaseUser {
 
     const { error: signInError } = await this.auth_admin.signOut(token);
 
-    if (!signInError) {
-      const { error: updateError } = await this.auth_admin.updateUserById(
-        user?.id ?? "",
-        {
-          user_metadata: {
-            status: USER_STATUS.INACTIVE,
-          },
-        }
-      );
-
-      if (signInError || updateError) {
-        errorHandler && errorHandler(signInError ?? updateError);
-        return false;
+    const { error: updateError } = await this.auth_admin.updateUserById(
+      user?.id ?? "",
+      {
+        user_metadata: {
+          status: USER_STATUS.INACTIVE,
+        },
       }
+    );
+
+    if (signInError || updateError) {
+      errorHandler && errorHandler(signInError ?? updateError);
+      return false;
     }
 
     return true;
