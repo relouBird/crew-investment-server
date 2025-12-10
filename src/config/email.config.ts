@@ -1,5 +1,4 @@
 import { createTransport } from "nodemailer";
-import { Resend } from "resend";
 
 // Prototype qui gere avec MAILDEV....
 //---------------------------------
@@ -20,6 +19,3 @@ export const gmail_transporter = createTransport({
   },
 });
 
-// Prototype qui gere avec Resend....
-//---------------------------------
-export const resend = new Resend(process.env.RESEND_API_KEY);

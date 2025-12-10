@@ -107,14 +107,6 @@ export class OTPModel {
       //   html: GenerateEmail(otp, reset ?? false, true),
       // });
 
-      // // Envoyer l’email OTP EN PRODDDDDDD
-      // const data = await resend.emails.send({
-      //   from: "onboarding@resend.dev", // ou ton domaine validé ?? investia.org.com
-      //   to: [email],
-      //   subject: "Code de vérification",
-      //   html: GenerateEmail(otp, reset ?? false, true),
-      // });
-      // console.log("Email envoyé:", data);
     } catch (error) {
       console.error("Erreur:", error);
     }
