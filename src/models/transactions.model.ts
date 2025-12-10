@@ -1,6 +1,5 @@
 import { checkPayment, checkTransfers } from "../config/notchpay.config";
 import { PaymentResponse, TransferResponse } from "notchpay-api";
-import { gmail_transporter, transporter } from "../config/email.config";
 import { Create } from "../database/create";
 import { Fetch } from "../database/fetch";
 import { Update } from "../database/update";
@@ -90,21 +89,6 @@ export class TransactionModel {
     transaction_id: string
   ) {
     try {
-      // // Envoyer l’email OTP EN DEVVVVV
-      // await transporter.sendMail({
-      //   from: "noreply@investia.com",
-      //   to: email,
-      //   subject: "Compte Rechargé avec Succès...",
-      //   html: GenerateThanksEmail(funds_added, transaction_id),
-      // });
-
-      // Envoyer l’email OTP EN PROD AVEC GMAIL
-      const data = await gmail_transporter.sendMail({
-        from: "noreply@investia.com",
-        to: email,
-        subject: "Compte Rechargé avec Succès...",
-        html: GenerateThanksEmail(funds_added, transaction_id, true),
-      });
 
       //   console.log("Email envoyé:", data);
     } catch (error) {
@@ -114,21 +98,6 @@ export class TransactionModel {
 
   async failConfirmationMail(email: string, transaction_id: string) {
     try {
-      // // Envoyer l’email OTP EN DEVVVVV
-      // await transporter.sendMail({
-      //   from: "noreply@investia.com",
-      //   to: email,
-      //   subject: "Echec de la transaction...",
-      //   html: GenerateFailEmail(transaction_id, false),
-      // });
-
-      // Envoyer l’email OTP EN DEVVVVV
-      const data = await gmail_transporter.sendMail({
-        from: "noreply@investia.com",
-        to: email,
-        subject: "Echec de la transaction...",
-        html: GenerateFailEmail(transaction_id, true),
-      });
 
       //   console.log("Email envoyé:", data);
     } catch (error) {

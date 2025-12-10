@@ -46,31 +46,13 @@ server.get("/dev", (req: Request, res: Response) => {
 });
 
 // Action repetitive pour voir tous les paris...
-nodeCron.schedule("* * * * *", async () => {
+nodeCron.schedule("*/5 * * * *", async () => {
   console.log("Checking Every Bets...");
   await betChecker();
 });
 
 // Action repetitive pour checker tous les paris...
-nodeCron.schedule("*/2 * * * *", async () => {
+nodeCron.schedule("*/8 * * * *", async () => {
   console.log("Checking Transactions On Bets...");
   await usersBetChecker();
 });
-
-// // Action repetitive pour controler le depot effectué...
-// nodeCron.schedule("* * * * *", async () => {
-//   console.log("Checking Every Deposit...");
-//   // await socketCheckPaymentState();
-// });
-
-// // Action repetitive pour controler les retraits effectué...
-// nodeCron.schedule("*/3 * * * *", async () => {
-//   console.log("Checking Every Withdraw...");
-//   // await socketCheckWithdrawState();
-// });
-
-// // Action repetitive...
-// nodeCron.schedule("0 0 * * *", async () => {
-//   console.log("Send email to all users...");
-//   // await socketCheckTransactionState();
-// });
