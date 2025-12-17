@@ -76,21 +76,12 @@ export interface InitializeBeneficiaryPayload {
   channel: string;
   name: string;
   email: string;
-  phone: string;
-  account_number: string;
+  phone?: string;
+  account_number?: string;
   country: string;
   currency: string;
   type: string;
 }
-
-// export interface InitializeBeneficiaryPayload {
-//   name: string;
-//   email: string;
-//   phone: string;
-//   country: "CM";
-//   currency: "XAF";
-//   type: "mobile_money";
-// }
 
 export interface InitializeTransferPayload {
   beneficiary: string;

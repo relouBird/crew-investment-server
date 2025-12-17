@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import { User } from "@supabase/supabase-js";
 import { WalletModel } from "../models/wallet.model";
 import {
+  beneficiaryResponse,
   RefillWalletType,
   UserWalletTransaction,
   UserWalletType,
@@ -128,6 +129,7 @@ export const refillAccount = async (req: Request, res: Response) => {
 
   let data: UserWalletType | null = null;
 
+  // Ici ON RECUPERE LE PORTE-FEUILLE DE L'UTILISATEUR
   if (reqBody) {
     data = await wallet.getByUid(user.id ?? "", (error) => {
       isError = true;
@@ -142,6 +144,8 @@ export const refillAccount = async (req: Request, res: Response) => {
     console.log("data-getted =>", data);
   }
 
+  // SI CAS PLUS HAUT ECHEANT
+  // --------> ON CREE UN NOUVEAU PORTE-FEUILLE
   if (!data && reqBody && isError) {
     data = await wallet.create({ uid: user.id }, (error) => {
       isError = true;
@@ -155,6 +159,7 @@ export const refillAccount = async (req: Request, res: Response) => {
     });
   }
 
+  // ICI ON INITIALISE LE PAYMENT
   if (!isError && reqBody && data) {
     const dataRefill = await wallet.refill(
       user.email ?? "",
@@ -171,12 +176,14 @@ export const refillAccount = async (req: Request, res: Response) => {
       }
     );
 
+    // SI CAS PLUS HAUT REUSSIT
+    // -----------> ON CREE UNE TRANSACTION
     const transaction_init =
       dataRefill &&
       (await transactions.create(
         {
           creator_id: user.id,
-          description:`Depot - ${reqBody.service}`,
+          description: `Depot - ${reqBody.service}`,
           amount: reqBody.amount,
           transaction_id: dataRefill?.transaction.reference,
         },
@@ -233,6 +240,7 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
 
   let data: UserWalletType | null = null;
 
+  // Ici ON RECUPERE LE PORTE-FEUILLE DE L'UTILISATEUR
   if (reqBody) {
     data = await wallet.getByUid(user.id ?? "", (error) => {
       isError = true;
@@ -247,6 +255,8 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
     console.log("data-getted =>", data);
   }
 
+  // SI CAS PLUS HAUT ECHEANT
+  // --------> ON CREE UN NOUVEAU PORTE-FEUILLE
   if (!data && reqBody) {
     data = await wallet.create({ uid: user.id }, (error) => {
       isError = true;
@@ -260,26 +270,38 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
     });
   }
 
+  // ICI ON INITIALISE LE TRANSFER
   if (!isError && reqBody && data && reqBody.amount < data.funds) {
+    let beneficiary: beneficiaryResponse | undefined = undefined;
+
     if (data.funds_id === "") {
       let name: string =
         user.user_metadata.firstName + " " + user.user_metadata.lastName;
 
       console.log("wallet-user-name =>", name);
-      const beneficiary = await wallet.createBeneficiary(
-        name,
-        user.email ?? "",
-        reqBody.transaction_number,
-        (error) => {
-          console.log(
-            "wallet-create-beneficiary-error =>",
-            error.message,
-            " on email :",
-            user.email
-          );
-          errorMessage = error.message ?? "";
-        }
-      );
+
+      // ======> S'IL Y A UN BENEFICIARE ON VA LE LOAD
+      if (data.funds_id && data.funds_id != "") {
+        // continue
+      } else {
+        // SINON ON LE CREE LE BENECIFIAIRE ET ON MET A JOUR LE WALLET
+        beneficiary = await wallet.createBeneficiary(
+          name,
+          user.email ?? "",
+          reqBody.transaction_number,
+          reqBody.service,
+          (error) => {
+            console.log(
+              "wallet-create-beneficiary-error =>",
+              error.message,
+              " on email :",
+              user.email
+            );
+            errorMessage = error.message ?? "";
+          }
+        );
+      }
+
       data = (await wallet.update(
         { ...data, funds_id: beneficiary?.beneficiary.id ?? "" },
         (error) => {
@@ -293,10 +315,10 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
         }
       )) as UserWalletType;
     }
-    const dataWithdraw = await wallet.withdraw(
-      data.funds_id,
-      reqBody.amount,
-      (error) => {
+
+    const dataWithdraw =
+      beneficiary &&
+      (await wallet.withdraw(data.funds_id, reqBody.amount, (error) => {
         isError = true;
         console.log(
           "wallet-withdraw-error =>",
@@ -305,8 +327,7 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
           user.email
         );
         errorMessage = error.message ?? "";
-      }
-    );
+      }));
 
     const transaction_init =
       dataWithdraw &&
@@ -314,7 +335,7 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
         {
           creator_id: user.id,
           amount: reqBody.amount,
-          description:`Retrait - ${reqBody.service}`,
+          description: `Retrait - ${reqBody.service}`,
           transaction_id: dataWithdraw.transfer.reference,
           type: "withdrawal",
         },
@@ -346,6 +367,7 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
 
     dataWithdraw
       ? setTimeout(async () => {
+          //  SI LA TRANSACTION REUSSIE
           res.status(200).json({
             message: "WithDraw Transaction Initialized...",
             data: {
@@ -356,6 +378,7 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
           });
         }, 2000)
       : setTimeout(async () => {
+          // SI LA TRANSACTION AU NIVEAU DE NOTCHPAY A ECHOUE
           res.status(403).json({
             message: "Not Found...",
             details: "Something where wrongs when launched...",
@@ -363,195 +386,19 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
         }, 1000);
   } else if (!isError && reqBody && data && reqBody.amount > data.funds) {
     setTimeout(async () => {
-      res.status(404).json({
+      // SI LES FONDS SONT INSUFFISANTS
+      res.status(402).json({
         message: "Not Found...",
         details: "You've insufficient balance funds...",
       });
     }, 1000);
   } else {
     setTimeout(async () => {
+      // ERREUR DONT ON ARRIVE PAS A GERER
       res.status(404).json({
         message: "No Transaction To Initialize Found...",
         details: errorMessage,
       });
     }, 1000);
-  }
-};
-
-
-// fonction asynchrone qui va s'appeler chaque 30 secondes pour controller les transactions en cours...
-export const socketCheckPaymentState = async () => {
-  const transactions = new TransactionModel();
-  const wallets = new WalletModel();
-  let isError = false;
-  let errorMessage = "";
-  let transaction_id_tab: string[] = [];
-  let transactionStateList: PaymentResponse[] | null = null;
-
-  const data = await transactions.getManyByState("pending", (error) => {
-    isError = true;
-    console.log("transactions-getting-error =>", error?.message);
-    errorMessage = error?.message ?? "";
-  });
-
-  if (!isError && data) {
-    transaction_id_tab = data.map((elt) => {
-      return elt.transaction_id;
-    });
-
-    transactionStateList = await transactions.checkListPayment(
-      transaction_id_tab,
-      (error) => {
-        isError = true;
-        errorMessage = error.message ?? "";
-      }
-    );
-  }
-
-  if (!isError && data && transactionStateList) {
-    // maintenant nous allons check toutes les transactions et les recuperer
-    for (let index = 0; index < transactionStateList.length; index++) {
-      const elementState = transactionStateList[index];
-      const transaction = data[index];
-
-      if (elementState.transaction.status == "pending") {
-        continue;
-      }
-      if (elementState.transaction.status == "processing") {
-        continue;
-      } else if (elementState.transaction.status == "complete") {
-        // Recuperer d'abord son portefeuille..
-        const wallet = (await wallets.getByUid(
-          transaction.creator_id,
-          (error) => {
-            isError = true;
-            console.log("wallet-getting-error =>", error?.message);
-            errorMessage = error?.message ?? "";
-          }
-        )) as UserWalletType;
-
-        // met à jour la transaction...
-        await transactions.update(
-          { ...transaction, status: "done" },
-          (error) => {
-            isError = true;
-            console.log("transactions-update-error =>", error?.message);
-            errorMessage = error?.message ?? "";
-          }
-        );
-
-        //met à jour donc le portefeuille avec son argent
-        await wallets.update(
-          {
-            ...wallet,
-            funds: wallet.funds + transaction.amount,
-          },
-          (error) => {
-            isError = true;
-            console.log("wallet-update-error =>", error?.message);
-            errorMessage = error?.message ?? "";
-          }
-        );
-      } else {
-        await transactions.update(
-          { ...transaction, status: "failed" },
-          (error) => {
-            isError = true;
-            console.log("transactions-update-error =>", error?.message);
-            errorMessage = error?.message ?? "";
-          }
-        );
-      }
-    }
-  } else {
-  }
-};
-
-// fonction asynchrone qui va s'appeler chaque 30 secondes pour controller les transactions en cours...
-export const socketCheckWithdrawState = async () => {
-  const transactions = new TransactionModel();
-  const wallets = new WalletModel();
-  let isError = false;
-  let errorMessage = "";
-  let transaction_id_tab: string[] = [];
-  let transactionStateList: TransferResponse[] | null = null;
-
-  const data = await transactions.getManyByState("pending", (error) => {
-    isError = true;
-    console.log("transactions-getting-error =>", error?.message);
-    errorMessage = error?.message ?? "";
-  });
-
-  if (!isError && data) {
-    transaction_id_tab = data.map((elt) => {
-      return elt.transaction_id;
-    });
-
-    transactionStateList = await transactions.checkListTransfers(
-      transaction_id_tab,
-      (error) => {
-        isError = true;
-        errorMessage = error.message ?? "";
-      }
-    );
-  }
-
-  if (!isError && data && transactionStateList) {
-    // maintenant nous allons check toutes les transactions et les recuperer
-    for (let index = 0; index < transactionStateList.length; index++) {
-      const elementState = transactionStateList[index];
-      const transaction = data[index];
-
-      if (elementState.transfer.status == "pending") {
-        continue;
-      }
-      if (elementState.transfer.status == "processing") {
-        continue;
-      } else if (elementState.transfer.status == "failed") {
-        //---------------------------------------- à remplacer plus tard par complete
-        // met à jour la transaction...
-        await transactions.update(
-          { ...transaction, status: "done" },
-          (error) => {
-            isError = true;
-            console.log("transactions-update-error =>", error?.message);
-            errorMessage = error?.message ?? "";
-          }
-        );
-      } else {
-        // Recuperer d'abord son portefeuille..
-        const wallet = (await wallets.getByUid(
-          transaction.creator_id,
-          (error) => {
-            isError = true;
-            console.log("wallet-getting-error =>", error?.message);
-            errorMessage = error?.message ?? "";
-          }
-        )) as UserWalletType;
-
-        await transactions.update(
-          { ...transaction, status: "failed" },
-          (error) => {
-            isError = true;
-            console.log("transactions-update-error =>", error?.message);
-            errorMessage = error?.message ?? "";
-          }
-        );
-
-        //met à jour donc le portefeuille avec son argent
-        await wallets.update(
-          {
-            ...wallet,
-            funds: wallet.funds + transaction.amount,
-          },
-          (error) => {
-            isError = true;
-            console.log("wallet-update-error =>", error?.message);
-            errorMessage = error?.message ?? "";
-          }
-        );
-      }
-    }
-  } else {
   }
 };

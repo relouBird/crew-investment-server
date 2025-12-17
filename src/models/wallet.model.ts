@@ -11,7 +11,7 @@ import { Fetch } from "../database/fetch";
 import { Update } from "../database/update";
 import { Delete } from "../database/delete";
 import { ErrorHandler, WalletErrorHandler } from "../types/database.type";
-import { RefillWalletType, UserWalletType } from "../types/wallet.type";
+import { METHOD_PAYMENT, RefillWalletType, UserWalletType } from "../types/wallet.type";
 import {
   PaymentResponse,
   PaymentsResponse,
@@ -154,10 +154,11 @@ export class WalletModel {
     name: string,
     email: string,
     phone: string,
+    method : METHOD_PAYMENT,
     errorHandler?: WalletErrorHandler
   ) {
     let isError = false;
-    const data = await createBeneficiary(name, email, phone, (error) => {
+    const data = await createBeneficiary(name, email, phone,method, (error) => {
       isError = true;
       errorHandler && errorHandler(error);
     });

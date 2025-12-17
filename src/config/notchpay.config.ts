@@ -20,8 +20,10 @@ import { ApiError, WalletErrorHandler } from "../types/database.type";
 
 // Set up your secrets
 const BASE = "https://api.notchpay.co";
-const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY!;
-const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY!;
+const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY_PROD!;
+const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY_PROD!;
+// const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY!;
+// const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY!;
 
 const METHOD: Record<string, METHOD_REQUEST> = {
   GET: "GET",
@@ -70,7 +72,7 @@ const notchTransfer = async (
   return response;
 };
 
-// ceci permet de gerer les transferts...
+// ceci permet de gerer ceux qui recoivent...
 const notchBeneficiary = async (
   method: METHOD_REQUEST,
   endpoint: string = "",
@@ -94,6 +96,31 @@ const notchBeneficiary = async (
 //---------------------------------------
 //--------------PAYMENTS-----------------
 //---------------------------------------
+
+/**
+ * Cette fonction permet de créer une transaction pour l'utilisateur...
+ * @returns {Promise<PaymentsResponse | undefined>}
+ */
+export const listPayments = async (
+  errorHandler?: WalletErrorHandler
+): Promise<PaymentsResponse | undefined> => {
+  try {
+    const response = await notchPayment(METHOD.GET);
+
+    if (!response.ok) {
+      throw new Error(
+        `Process payment failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const payments = response.json() as unknown as PaymentsResponse;
+    console.log("Payments retrieved:", payments);
+    return payments;
+  } catch (error) {
+    console.log("listing-payment-error =>", error);
+    errorHandler && errorHandler(error as ApiError);
+    return undefined;
+  }
+};
 
 /**
  * Cette fonction permet de créer une transaction pour l'utilisateur...
@@ -233,31 +260,6 @@ export const cancelPayment = async (
   }
 };
 
-/**
- * Cette fonction permet de créer une transaction pour l'utilisateur...
- * @returns {Promise<PaymentsResponse | undefined>}
- */
-export const listPayments = async (
-  errorHandler?: WalletErrorHandler
-): Promise<PaymentsResponse | undefined> => {
-  try {
-    const response = await notchPayment(METHOD.GET);
-
-    if (!response.ok) {
-      throw new Error(
-        `Process payment failed: ${response.status} ${await response.text()}`
-      );
-    }
-    const payments = response.json() as unknown as PaymentsResponse;
-    console.log("Payments retrieved:", payments);
-    return payments;
-  } catch (error) {
-    console.log("listing-payment-error =>", error);
-    errorHandler && errorHandler(error as ApiError);
-    return undefined;
-  }
-};
-
 // ----------------------------------------------
 // Partie qui gère les transferts
 // ----------------------------------------------
@@ -266,9 +268,8 @@ export const listPayments = async (
  * Cette fonction permet de créer un transfert pour envoyer des fonds chez un utilisateur
  * @param {string} recipient_id C'est le numero de la transaction
  * @param {number} amount C'est le montant à retirer
- * @param {METHOD_PAYMENT} service C'est le reseau sur lequel on effectue la transaction...
- * @param {number} amount c'est le montant de la transaction...
- * @returns {Promise<PaymentBuildResponse | undefined>}
+ * @param {WalletErrorHandler | undefined} errorHandler C'est la fonction qui permet de gerer la suite en cas d'erreur...
+ * @returns {Promise<TransferResponse | undefined>}
  */
 export const createTransfers = async (
   recipient_id: string,
@@ -276,13 +277,16 @@ export const createTransfers = async (
   errorHandler?: WalletErrorHandler
 ): Promise<TransferResponse | undefined> => {
   try {
-    const payload = {
-      beneficiary: recipient_id,
+    const payload: InitializeTransferPayload = {
       amount,
       currency: "XAF",
-      channel : "cm.mobile",
+      beneficiary: recipient_id,
+      channel: "cm.mobile",
       description: "Payment for services",
     };
+
+    console.log("PAYMENT-PAYLOAD ==>", payload);
+
     const response = await notchTransfer(METHOD.POST, "", payload);
 
     if (!response.ok) {
@@ -368,7 +372,9 @@ export const listBeneficiaries = async (
 
     if (!response.ok) {
       throw new Error(
-        `Process beneficiary failed: ${response.status} ${await response.text()}`
+        `Process beneficiary failed: ${
+          response.status
+        } ${await response.text()}`
       );
     }
     const beneficiary = (await response.json()) as beneficiariesResponse;
@@ -395,7 +401,9 @@ export const getBeneficiary = async (
 
     if (!response.ok) {
       throw new Error(
-        `Process beneficiary failed: ${response.status} ${await response.text()}`
+        `Process beneficiary failed: ${
+          response.status
+        } ${await response.text()}`
       );
     }
     const transfer = (await response.json()) as beneficiaryResponse;
@@ -429,7 +437,6 @@ export const updateBeneficiary = async (
       name,
       email,
       phone,
-      account_number: phone,
       country: "CM",
       currency: "XAF",
       type: "mobile_money",
@@ -442,7 +449,9 @@ export const updateBeneficiary = async (
 
     if (!response.ok) {
       throw new Error(
-        `Process beneficiary failed: ${response.status} ${await response.text()}`
+        `Process beneficiary failed: ${
+          response.status
+        } ${await response.text()}`
       );
     }
     const transfer = (await response.json()) as beneficiaryResponse;
@@ -466,11 +475,12 @@ export const createBeneficiary = async (
   name: string,
   email: string,
   phone: string,
+  method: string,
   errorHandler?: WalletErrorHandler
 ): Promise<beneficiaryResponse | undefined> => {
   try {
     const payload: InitializeBeneficiaryPayload = {
-      channel: "cm.mobile",
+      channel: method || "cm.mobile",
       name,
       email,
       phone,
@@ -480,11 +490,15 @@ export const createBeneficiary = async (
       type: "mobile_money",
     };
 
+    console.log("BENEFICIARY-PAYLOAD =>", payload);
+
     const response = await notchBeneficiary(METHOD.POST, "", payload);
 
     if (!response.ok) {
       throw new Error(
-        `Process beneficiary failed: ${response.status} ${await response.text()}`
+        `Process beneficiary failed: ${
+          response.status
+        } ${await response.text()}`
       );
     }
     const beneficiary = (await response.json()) as beneficiaryResponse;
