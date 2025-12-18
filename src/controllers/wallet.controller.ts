@@ -316,18 +316,22 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
       )) as UserWalletType;
     }
 
-    const dataWithdraw =
-      beneficiary &&
-      (await wallet.withdraw(data.funds_id, reqBody.amount, (error) => {
-        isError = true;
-        console.log(
-          "wallet-withdraw-error =>",
-          error.message,
-          " on email :",
-          user.email
-        );
-        errorMessage = error.message ?? "";
-      }));
+    const stater =
+      beneficiary != undefined ||
+      (data.funds_id != undefined && data.funds_id != "");
+
+    const dataWithdraw = stater
+      ? await wallet.withdraw(data.funds_id, reqBody.amount, (error) => {
+          isError = true;
+          console.log(
+            "wallet-withdraw-error =>",
+            error.message,
+            " on email :",
+            user.email
+          );
+          errorMessage = error.message ?? "";
+        })
+      : undefined;
 
     const transaction_init =
       dataWithdraw &&

@@ -20,10 +20,10 @@ import { ApiError, WalletErrorHandler } from "../types/database.type";
 
 // Set up your secrets
 const BASE = "https://api.notchpay.co";
-const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY_PROD!;
-const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY_PROD!;
-// const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY!;
-// const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY!;
+// const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY_PROD!;
+// const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY_PROD!;
+const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY!;
+const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY!;
 
 const METHOD: Record<string, METHOD_REQUEST> = {
   GET: "GET",
@@ -436,10 +436,9 @@ export const updateBeneficiary = async (
       channel: "cm.mobile",
       name,
       email,
-      phone,
+      account_number: phone.replace("+", ""),
       country: "CM",
-      currency: "XAF",
-      type: "mobile_money",
+      description: `Create Beneficiary: ${name}`,
     };
     const response = await notchBeneficiary(
       METHOD.PUT,
@@ -483,11 +482,9 @@ export const createBeneficiary = async (
       channel: method || "cm.mobile",
       name,
       email,
-      phone,
-      account_number: phone,
+      account_number: phone.replace("+", ""),
+      description: `Create Beneficiary: ${name}`,
       country: "CM",
-      currency: "XAF",
-      type: "mobile_money",
     };
 
     console.log("BENEFICIARY-PAYLOAD =>", payload);

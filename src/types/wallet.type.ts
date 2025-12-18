@@ -76,11 +76,9 @@ export interface InitializeBeneficiaryPayload {
   channel: string;
   name: string;
   email: string;
-  phone?: string;
-  account_number?: string;
+  account_number: string;
+  description: string;
   country: string;
-  currency: string;
-  type: string;
 }
 
 export interface InitializeTransferPayload {
