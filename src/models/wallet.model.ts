@@ -5,13 +5,18 @@ import {
   createTransfers,
   createBeneficiary,
   listTransfers,
+  simpleCreateTransfers,
 } from "../config/notchpay.config";
 import { Create } from "../database/create";
 import { Fetch } from "../database/fetch";
 import { Update } from "../database/update";
 import { Delete } from "../database/delete";
 import { ErrorHandler, WalletErrorHandler } from "../types/database.type";
-import { RefillWalletType, UserWalletType } from "../types/wallet.type";
+import {
+  METHOD_PAYMENT,
+  RefillWalletType,
+  UserWalletType,
+} from "../types/wallet.type";
 import {
   PaymentResponse,
   PaymentsResponse,
@@ -150,17 +155,41 @@ export class WalletModel {
     return undefined;
   }
 
+  async simpleWithdraw(
+    name: string,
+    phone: string,
+    amount: number,
+    errorHandler?: WalletErrorHandler
+  ) {
+    let isError = false;
+    const data = await simpleCreateTransfers(name, phone, amount, (error) => {
+      isError = true;
+      errorHandler && errorHandler(error);
+    });
+    if (!isError) {
+      return data;
+    }
+    return undefined;
+  }
+
   async createBeneficiary(
     name: string,
     email: string,
     phone: string,
+    method: METHOD_PAYMENT,
     errorHandler?: WalletErrorHandler
   ) {
     let isError = false;
-    const data = await createBeneficiary(name, email, phone, (error) => {
-      isError = true;
-      errorHandler && errorHandler(error);
-    });
+    const data = await createBeneficiary(
+      name,
+      email,
+      phone,
+      method,
+      (error) => {
+        isError = true;
+        errorHandler && errorHandler(error);
+      }
+    );
     if (!isError) {
       return data;
     }

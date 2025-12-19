@@ -76,21 +76,10 @@ export interface InitializeBeneficiaryPayload {
   channel: string;
   name: string;
   email: string;
-  phone: string;
   account_number: string;
+  description: string;
   country: string;
-  currency: string;
-  type: string;
 }
-
-// export interface InitializeBeneficiaryPayload {
-//   name: string;
-//   email: string;
-//   phone: string;
-//   country: "CM";
-//   currency: "XAF";
-//   type: "mobile_money";
-// }
 
 export interface InitializeTransferPayload {
   beneficiary: string;
@@ -98,6 +87,18 @@ export interface InitializeTransferPayload {
   currency: string;
   channel: string;
   description: string;
+}
+
+export interface InitializeSimpleTransferPayload {
+  description: string;
+  amount: number;
+  currency: string;
+  channel: string;
+  recipient: {
+    account_number: string;
+    country: "CM";
+    name: string;
+  };
 }
 
 export interface CancelResponse {
