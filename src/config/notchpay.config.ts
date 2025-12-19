@@ -12,6 +12,7 @@ import {
   beneficiaryResponse,
   CancelResponse,
   InitializeBeneficiaryPayload,
+  InitializeSimpleTransferPayload,
   InitializeTransferPayload,
   METHOD_PAYMENT,
   METHOD_REQUEST,
@@ -55,7 +56,7 @@ const notchPayment = async (
 const notchTransfer = async (
   method: METHOD_REQUEST,
   endpoint: string = "",
-  payload?: InitializeTransferPayload
+  payload?: InitializeTransferPayload| InitializeSimpleTransferPayload
 ) => {
   const url = `${BASE}/transfers/${encodeURIComponent(endpoint)}`;
   console.log(method, "/ url =>", url);
@@ -286,6 +287,52 @@ export const createTransfers = async (
     };
 
     console.log("PAYMENT-PAYLOAD ==>", payload);
+
+    const response = await notchTransfer(METHOD.POST, "", payload);
+
+    if (!response.ok) {
+      throw new Error(
+        `Process transfer failed: ${response.status} ${await response.text()}`
+      );
+    }
+    const transfer = (await response.json()) as TransferResponse;
+    console.log("Transfer created:", transfer);
+    return transfer;
+  } catch (error) {
+    console.log("creating-transfers-error =>", error);
+    errorHandler && errorHandler(error as ApiError);
+    return undefined;
+  }
+};
+
+/**
+ * Cette fonction permet de créer un transfert pour envoyer des fonds chez un utilisateur
+ * @param {string} name C'est le nom du bénéficiaire...
+ * @param {string} phone C'est le numero de téléphone du bénéficiaire...
+ * @param {number} amount C'est le montant à retirer
+ * @param {WalletErrorHandler | undefined} errorHandler C'est la fonction qui permet de gerer la suite en cas d'erreur...
+ * @returns {Promise<TransferResponse | undefined>}
+ */
+export const simpleCreateTransfers = async (
+  name: string,
+  phone: string,
+  amount: number,
+  errorHandler?: WalletErrorHandler
+): Promise<TransferResponse | undefined> => {
+  try {
+    const payload: InitializeSimpleTransferPayload = {
+      description: "MANUAL_CASHOUT",
+      amount,
+      currency: "XAF",
+      channel: "cm.mobile",
+      recipient: {
+        account_number: phone.replace("+", ""),
+        country: "CM",
+        name,
+      },
+    };
+
+    console.log("SIMPLE-PAYMENT-PAYLOAD ==>", payload);
 
     const response = await notchTransfer(METHOD.POST, "", payload);
 

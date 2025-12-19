@@ -89,6 +89,18 @@ export interface InitializeTransferPayload {
   description: string;
 }
 
+export interface InitializeSimpleTransferPayload {
+  description: string;
+  amount: number;
+  currency: string;
+  channel: string;
+  recipient: {
+    account_number: string;
+    country: "CM";
+    name: string;
+  };
+}
+
 export interface CancelResponse {
   code: number;
   message: string;

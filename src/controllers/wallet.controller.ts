@@ -272,66 +272,21 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
 
   // ICI ON INITIALISE LE TRANSFER
   if (!isError && reqBody && data && reqBody.amount < data.funds) {
-    let beneficiary: beneficiaryResponse | undefined = undefined;
-
-    if (data.funds_id === "") {
-      let name: string =
-        user.user_metadata.firstName + " " + user.user_metadata.lastName;
-
-      console.log("wallet-user-name =>", name);
-
-      // ======> S'IL Y A UN BENEFICIARE ON VA LE LOAD
-      if (data.funds_id && data.funds_id != "") {
-        // continue
-      } else {
-        // SINON ON LE CREE LE BENECIFIAIRE ET ON MET A JOUR LE WALLET
-        beneficiary = await wallet.createBeneficiary(
-          name,
-          user.email ?? "",
-          reqBody.transaction_number,
-          reqBody.service,
-          (error) => {
-            console.log(
-              "wallet-create-beneficiary-error =>",
-              error.message,
-              " on email :",
-              user.email
-            );
-            errorMessage = error.message ?? "";
-          }
+    const dataWithdraw = await wallet.simpleWithdraw(
+      user.user_metadata.firstName + " " + user.user_metadata.lastName,
+      reqBody.transaction_number,
+      reqBody.amount,
+      (error) => {
+        isError = true;
+        console.log(
+          "wallet-withdraw-error =>",
+          error.message,
+          " on email :",
+          user.email
         );
+        errorMessage = error.message ?? "";
       }
-
-      data = (await wallet.update(
-        { ...data, funds_id: beneficiary?.beneficiary.id ?? "" },
-        (error) => {
-          console.log(
-            "wallet-create-beneficiary-error =>",
-            error?.message,
-            " on email :",
-            user.email
-          );
-          errorMessage = error?.message ?? "";
-        }
-      )) as UserWalletType;
-    }
-
-    const stater =
-      beneficiary != undefined ||
-      (data.funds_id != undefined && data.funds_id != "");
-
-    const dataWithdraw = stater
-      ? await wallet.withdraw(data.funds_id, reqBody.amount, (error) => {
-          isError = true;
-          console.log(
-            "wallet-withdraw-error =>",
-            error.message,
-            " on email :",
-            user.email
-          );
-          errorMessage = error.message ?? "";
-        })
-      : undefined;
+    );
 
     const transaction_init =
       dataWithdraw &&
@@ -406,3 +361,184 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
     }, 1000);
   }
 };
+
+// // fonction qui permet de verifier un OTP... lors de la creation de compte
+// export const withdrawalAccount = async (req: Request, res: Response) => {
+//   const wallet = new WalletModel();
+//   const transactions = new TransactionModel();
+//   // utils datas...
+//   const reqBody = req.body as RefillWalletType; // Ce type...
+//   const user = (req as any).user as User;
+//   let isError = false;
+//   let errorMessage = "";
+
+//   console.log(`identification-wallet-transaction =>`, reqBody);
+
+//   let data: UserWalletType | null = null;
+
+//   // Ici ON RECUPERE LE PORTE-FEUILLE DE L'UTILISATEUR
+//   if (reqBody) {
+//     data = await wallet.getByUid(user.id ?? "", (error) => {
+//       isError = true;
+//       console.log(
+//         "wallet-getting-error =>",
+//         error?.message,
+//         " on email :",
+//         user.email
+//       );
+//       errorMessage = error?.message ?? "";
+//     });
+//     console.log("data-getted =>", data);
+//   }
+
+//   // SI CAS PLUS HAUT ECHEANT
+//   // --------> ON CREE UN NOUVEAU PORTE-FEUILLE
+//   if (!data && reqBody) {
+//     data = await wallet.create({ uid: user.id }, (error) => {
+//       isError = true;
+//       console.log(
+//         "wallet-create-error =>",
+//         error?.message,
+//         " on email :",
+//         user.email
+//       );
+//       errorMessage = error?.message ?? "";
+//     });
+//   }
+
+//   // ICI ON INITIALISE LE TRANSFER
+//   if (!isError && reqBody && data && reqBody.amount < data.funds) {
+//     let beneficiary: beneficiaryResponse | undefined = undefined;
+
+//     if (data.funds_id === "") {
+//       let name: string =
+//         user.user_metadata.firstName + " " + user.user_metadata.lastName;
+
+//       console.log("wallet-user-name =>", name);
+
+//       // ======> S'IL Y A UN BENEFICIARE ON VA LE LOAD
+//       if (data.funds_id && data.funds_id != "") {
+//         // continue
+//       } else {
+//         // SINON ON LE CREE LE BENECIFIAIRE ET ON MET A JOUR LE WALLET
+//         beneficiary = await wallet.createBeneficiary(
+//           name,
+//           user.email ?? "",
+//           reqBody.transaction_number,
+//           reqBody.service,
+//           (error) => {
+//             console.log(
+//               "wallet-create-beneficiary-error =>",
+//               error.message,
+//               " on email :",
+//               user.email
+//             );
+//             errorMessage = error.message ?? "";
+//           }
+//         );
+//       }
+
+//       data = (await wallet.update(
+//         { ...data, funds_id: beneficiary?.beneficiary.id ?? "" },
+//         (error) => {
+//           console.log(
+//             "wallet-create-beneficiary-error =>",
+//             error?.message,
+//             " on email :",
+//             user.email
+//           );
+//           errorMessage = error?.message ?? "";
+//         }
+//       )) as UserWalletType;
+//     }
+
+//     const stater =
+//       beneficiary != undefined ||
+//       (data.funds_id != undefined && data.funds_id != "");
+
+//     const dataWithdraw = stater
+//       ? await wallet.withdraw(data.funds_id, reqBody.amount, (error) => {
+//           isError = true;
+//           console.log(
+//             "wallet-withdraw-error =>",
+//             error.message,
+//             " on email :",
+//             user.email
+//           );
+//           errorMessage = error.message ?? "";
+//         })
+//       : undefined;
+
+//     const transaction_init =
+//       dataWithdraw &&
+//       (await transactions.create(
+//         {
+//           creator_id: user.id,
+//           amount: reqBody.amount,
+//           description: `Retrait - ${reqBody.service}`,
+//           transaction_id: dataWithdraw.transfer.reference,
+//           type: "withdrawal",
+//         },
+//         (error) => {
+//           isError = true;
+//           console.log(
+//             "transaction-create-error =>",
+//             error?.message,
+//             " on email :",
+//             user.email
+//           );
+//           errorMessage = error?.message ?? "";
+//         }
+//       ));
+
+//     //met à jour donc le portefeuille avec son argent
+//     dataWithdraw &&
+//       (await wallet.update(
+//         {
+//           ...data,
+//           funds: data.funds - (dataWithdraw?.transfer.amount ?? 0),
+//         },
+//         (error) => {
+//           isError = true;
+//           console.log("wallet-update-error =>", error?.message);
+//           errorMessage = error?.message ?? "";
+//         }
+//       ));
+
+//     dataWithdraw
+//       ? setTimeout(async () => {
+//           //  SI LA TRANSACTION REUSSIE
+//           res.status(200).json({
+//             message: "WithDraw Transaction Initialized...",
+//             data: {
+//               ...reqBody,
+//               transaction_id: transaction_init?.transaction_id,
+//               transaction_details: dataWithdraw?.transfer,
+//             },
+//           });
+//         }, 2000)
+//       : setTimeout(async () => {
+//           // SI LA TRANSACTION AU NIVEAU DE NOTCHPAY A ECHOUE
+//           res.status(403).json({
+//             message: "Not Found...",
+//             details: "Something where wrongs when launched...",
+//           });
+//         }, 1000);
+//   } else if (!isError && reqBody && data && reqBody.amount > data.funds) {
+//     setTimeout(async () => {
+//       // SI LES FONDS SONT INSUFFISANTS
+//       res.status(402).json({
+//         message: "Not Found...",
+//         details: "You've insufficient balance funds...",
+//       });
+//     }, 1000);
+//   } else {
+//     setTimeout(async () => {
+//       // ERREUR DONT ON ARRIVE PAS A GERER
+//       res.status(404).json({
+//         message: "No Transaction To Initialize Found...",
+//         details: errorMessage,
+//       });
+//     }, 1000);
+//   }
+// };
