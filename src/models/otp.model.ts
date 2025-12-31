@@ -91,21 +91,21 @@ export class OTPModel {
 
   async sendOTPViaMail(otp: string, email: string, reset?: boolean) {
     try {
-      // Envoyer l’email OTP EN DEV
-      await transporter.sendMail({
-       from: "noreply@investia.com",
-       to: email,
-       subject: "Code de vérification",
-       html: GenerateEmail(otp, reset ?? false),
-      });
+      // // Envoyer l’email OTP EN DEV
+      // await transporter.sendMail({
+      //  from: "noreply@investia.com",
+      //  to: email,
+      //  subject: "Code de vérification",
+      //  html: GenerateEmail(otp, reset ?? false),
+      // });
 
       // Envoyer l’email OTP EN PROD
-      // const data = await gmail_transporter.sendMail({
-      //   from: "noreply@investia.com",
-      //   to: email,
-      //   subject: "Code de vérification",
-      //   html: GenerateEmail(otp, reset ?? false, true),
-      // });
+      const data = await gmail_transporter.sendMail({
+        from: "noreply@investia.com",
+        to: email,
+        subject: "Code de vérification",
+        html: GenerateEmail(otp, reset ?? false, true),
+      });
 
     } catch (error) {
       console.error("Erreur:", error);
