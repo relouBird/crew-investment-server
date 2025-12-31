@@ -12,11 +12,13 @@ import {
   UserRegisterCredentials,
   UserSimpleCredentials,
 } from "../types/user.type";
-import { SupabaseAuthClient } from "@supabase/supabase-js/dist/module/lib/SupabaseAuthClient";
+
+import { createClient, type SupabaseClient, type Session, type AuthChangeEvent } 
+from '@supabase/supabase-js';
 
 export class DatabaseUser {
   protected name: string = "";
-  protected auth: SupabaseAuthClient;
+  protected auth: SupabaseClient["auth"];
   protected auth_admin: GoTrueAdminApi;
 
   /**
