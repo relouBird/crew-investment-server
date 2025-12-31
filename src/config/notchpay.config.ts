@@ -21,10 +21,10 @@ import { ApiError, WalletErrorHandler } from "../types/database.type";
 
 // Set up your secrets
 const BASE = "https://api.notchpay.co";
-const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY_PROD!;
-const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY_PROD!;
-// const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY!;
-// const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY!;
+// const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY_PROD!;
+// const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY_PROD!;
+const PUBLIC_KEY = process.env.NOTCHPAY_PUBLIC_KEY!;
+const PRIVATE_KEY = process.env.NOTCHPAY_PRIVATE_KEY!;
 
 const METHOD: Record<string, METHOD_REQUEST> = {
   GET: "GET",
