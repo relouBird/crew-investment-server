@@ -17,6 +17,7 @@ import SponsoringRouter from "./routes/sponsoring.route";
 // Importation des sockets
 import { betChecker } from "./sockets/bet.socket";
 import { usersBetChecker } from "./sockets/transaction.socket";
+import { socketCheckPaymentState, socketCheckWithdrawState } from "./sockets/wallet.socket";
 
 dotenv.config();
 const PORT = Number(process.env.PORT ?? 3500);
@@ -56,3 +57,21 @@ nodeCron.schedule("*/8 * * * *", async () => {
   console.log("Checking Transactions On Bets...");
   await usersBetChecker();
 });
+
+// Action repetitive pour controler le depot effectué...
+nodeCron.schedule("*/3 * * * *", async () => {
+  console.log("Checking Every Deposit...");
+  await socketCheckPaymentState();
+});
+
+// Action repetitive pour controler les retraits effectué...
+nodeCron.schedule("*/3 * * * *", async () => {
+  console.log("Checking Every Withdraw...");
+  // await socketCheckWithdrawState();
+});
+
+// // Action repetitive...
+// nodeCron.schedule("0 0 * * *", async () => {
+//   console.log("Send email to all users...");
+//   // await socketCheckTransactionState();
+// });
