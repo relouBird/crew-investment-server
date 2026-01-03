@@ -1,7 +1,4 @@
-import {
-  hoster_transporter,
-  transporter,
-} from "../config/email.config";
+import { hoster_transporter, transporter } from "../config/email.config";
 import { Create } from "../database/create";
 import { Fetch } from "../database/fetch";
 import { GenerateEmail } from "../helpers/utils.helper";
@@ -94,21 +91,21 @@ export class OTPModel {
 
   async sendOTPViaMail(otp: string, email: string, reset?: boolean) {
     try {
-      // Envoyer l’email OTP EN DEV
-      await transporter.sendMail({
-        from: "noreply@investia.com",
-        to: email,
-        subject: "Code de vérification",
-        html: GenerateEmail(otp, reset ?? false),
-      });
-
-      // // Envoyer l’email OTP EN PROD avec PLANET HOSTER
-      // const data = await hoster_transporter.sendMail({
-      //   from: `"RSG Investia, Supports" <${process.env.PLANET_HOSTER_SMTP_APP_USER}>`,
+      // // Envoyer l’email OTP EN DEV
+      // await transporter.sendMail({
+      //   from: "noreply@investia.com",
       //   to: email,
       //   subject: "Code de vérification",
-      //   html: GenerateEmail(otp, reset ?? false, true),
+      //   html: GenerateEmail(otp, reset ?? false),
       // });
+
+      // Envoyer l’email OTP EN PROD avec PLANET HOSTER
+      const data = await hoster_transporter.sendMail({
+        from: `"RSG Investia, Supports" <${process.env.PLANET_HOSTER_SMTP_APP_USER}>`,
+        to: email,
+        subject: "Code de vérification",
+        html: GenerateEmail(otp, reset ?? false, true),
+      });
     } catch (error) {
       console.error("Erreur:", error);
     }
