@@ -16,19 +16,27 @@ export const allBets = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Bets Checked...",
-        data: data ?? [],
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Bets Checked...",
+    //     data: data ?? [],
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "Bets Checked...",
+      data: data ?? [],
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Bets To Check Found...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Bets To Check Found...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Bets To Check Found...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -46,19 +54,27 @@ export const createBet = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Bets Created...",
-        data,
-      });
-    }, 2000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Bets Created...",
+    //     data,
+    //   });
+    // }, 2000);
+    res.status(200).json({
+      message: "Bets Created...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Something where wrong when creating bet...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Something where wrong when creating bet...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Something where wrong when creating bet...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -78,19 +94,27 @@ export const deleteBet = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Bets deleted successfully...",
-        data,
-      });
-    }, 2000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Bets deleted successfully...",
+    //     data,
+    //   });
+    // }, 2000);
+    res.status(200).json({
+      message: "Bets deleted successfully...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Error when deleting bet...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Error when deleting bet...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Error when deleting bet...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -111,19 +135,27 @@ export const updateBet = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Bets Updated successfully...",
-        data,
-      });
-    }, 2000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Bets Updated successfully...",
+    //     data,
+    //   });
+    // }, 2000);
+    res.status(200).json({
+      message: "Bets Updated successfully...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Error when updating bet...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Error when updating bet...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Error when updating bet...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -168,19 +200,27 @@ export const endBet = async (req: Request, res: Response) => {
   }
 
   if (!isError && ended_bet && usersBet) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Bets Updated successfully...",
-        data: ended_bet,
-      });
-    }, 2000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Bets Updated successfully...",
+    //     data: ended_bet,
+    //   });
+    // }, 2000);
+    res.status(200).json({
+      message: "Bets Updated successfully...",
+      data: ended_bet,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Error when updating bet...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Error when updating bet...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Error when updating bet...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -201,19 +241,27 @@ export const getAllCompetitions = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "All Competitions Checked...",
-        data,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "All Competitions Checked...",
+    //     data,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "All Competitions Checked...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Competitions To Check Found...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Competitions To Check Found...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Competitions To Check Found...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -234,19 +282,27 @@ export const getAllMatchCompetitions = async (req: Request, res: Response) => {
   );
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "All Matchs Checked...",
-        data,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "All Matchs Checked...",
+    //     data,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "All Matchs Checked...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Competitions To Check Found...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Competitions To Check Found...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Competitions To Check Found...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -264,19 +320,27 @@ export const getAllTeamCompetitions = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "All Teams Checked...",
-        data,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "All Teams Checked...",
+    //     data,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "All Teams Checked...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Competitions To Check Found...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Competitions To Check Found...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Competitions To Check Found...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -294,18 +358,26 @@ export const getMatch = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Match Checked...",
-        data,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Match Checked...",
+    //     data,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "Match Checked...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Match To Check Found...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Match To Check Found...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Match To Check Found...",
+      details: errorMessage,
+    });
   }
 };

@@ -28,12 +28,16 @@ export const getAllUsers = async (req: Request, res: Response) => {
   const data =
     user.user_metadata.type == USER_TYPE.ADMIN
       ? await userModel.getAll((error) => {
-          setTimeout(async () => {
-            res.status(500).send({
-              message: "Erreur lors de la récupération des Users",
-              error: error?.message,
-            });
-          }, 2000);
+          // setTimeout(async () => {
+          //   res.status(500).send({
+          //     message: "Erreur lors de la récupération des Users",
+          //     error: error?.message,
+          //   });
+          // }, 2000);
+          res.status(500).send({
+            message: "Erreur lors de la récupération des Users",
+            error: error?.message,
+          });
           response = true;
         })
       : null;
@@ -42,12 +46,16 @@ export const getAllUsers = async (req: Request, res: Response) => {
   const walletData =
     user.user_metadata.type == USER_TYPE.ADMIN
       ? await walletModel.getAll((error) => {
-          setTimeout(async () => {
-            res.status(500).send({
-              message: "Erreur lors de la récupération des Porte feuilles",
-              error: error?.message,
-            });
-          }, 2000);
+          // setTimeout(async () => {
+          //   res.status(500).send({
+          //     message: "Erreur lors de la récupération des Porte feuilles",
+          //     error: error?.message,
+          //   });
+          // }, 2000);
+          res.status(500).send({
+            message: "Erreur lors de la récupération des Porte feuilles",
+            error: error?.message,
+          });
           response = true;
         })
       : null;
@@ -56,22 +64,27 @@ export const getAllUsers = async (req: Request, res: Response) => {
   const transactionData =
     user.user_metadata.type == USER_TYPE.ADMIN
       ? await transactionModel.getManyByState(STATUS_TYPE.DONE, (error) => {
-          setTimeout(async () => {
-            res.status(500).send({
-              message: "Erreur lors de la récupération des Transactions",
-              error: error?.message,
-            });
-          }, 2000);
+          // setTimeout(async () => {
+          //   res.status(500).send({
+          //     message: "Erreur lors de la récupération des Transactions",
+          //     error: error?.message,
+          //   });
+          // }, 2000);
+          res.status(500).send({
+            message: "Erreur lors de la récupération des Transactions",
+            error: error?.message,
+          });
           response = true;
         })
       : null;
 
   if (!response && data && walletData && transactionData) {
-    setTimeout(async () => {
-      res
-        .status(200)
-        .json(getDetailsUserData(data, walletData, transactionData));
-    }, 2000);
+    // setTimeout(async () => {
+    //   res
+    //     .status(200)
+    //     .json(getDetailsUserData(data, walletData, transactionData));
+    // }, 2000);
+    res.status(200).json(getDetailsUserData(data, walletData, transactionData));
   }
 };
 
@@ -142,20 +155,29 @@ export const createUser = async (req: Request, res: Response) => {
     // Envoyer l'otp via Email...
     await otp_class.sendOTPViaMail(otp, data.email);
 
-    setTimeout(async () => {
-      res.status(201).json({
-        message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
-        data: data,
-        verify: datas?.state == "register",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(201).json({
+    //     message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
+    //     data: data,
+    //     verify: datas?.state == "register",
+    //   });
+    // }, 1000);
+    res.status(201).json({
+      message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
+      data: data,
+      verify: datas?.state == "register",
+    });
   } else {
-    setTimeout(async () => {
-      res.status(500).json({
-        message: "Erreur lors de la creation...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(500).json({
+    //     message: "Erreur lors de la creation...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(500).json({
+      message: "Erreur lors de la creation...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -228,20 +250,29 @@ export const createParrainedUser = async (req: Request, res: Response) => {
       (error) => {}
     );
 
-    setTimeout(async () => {
-      res.status(201).json({
-        message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
-        data: data,
-        verify: datas?.state == "register",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(201).json({
+    //     message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
+    //     data: data,
+    //     verify: datas?.state == "register",
+    //   });
+    // }, 1000);
+    res.status(201).json({
+      message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
+      data: data,
+      verify: datas?.state == "register",
+    });
   } else {
-    setTimeout(async () => {
-      res.status(500).json({
-        message: "Erreur lors de la creation...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(500).json({
+    //     message: "Erreur lors de la creation...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(500).json({
+      message: "Erreur lors de la creation...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -281,19 +312,27 @@ export const changePassword = async (req: Request, res: Response) => {
       }
     );
 
-    setTimeout(async () => {
-      res.status(201).json({
-        message: "Compte modifié.",
-        data: userData,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(201).json({
+    //     message: "Compte modifié.",
+    //     data: userData,
+    //   });
+    // }, 1000);
+    res.status(201).json({
+      message: "Compte modifié.",
+      data: userData,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(500).json({
-        message: "Erreur lors de la creation...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(500).json({
+    //     message: "Erreur lors de la creation...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(500).json({
+      message: "Erreur lors de la creation...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -347,19 +386,27 @@ export const verifyOTPUser = async (req: Request, res: Response) => {
         isError = true;
       }
     );
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Compte Verifié. Bienvenue sur InvestIA.",
-        data: userData,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Compte Verifié. Bienvenue sur InvestIA.",
+    //     data: userData,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "Compte Verifié. Bienvenue sur InvestIA.",
+      data: userData,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(500).json({
-        message: "Erreur lors de la Verification...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(500).json({
+    //     message: "Erreur lors de la Verification...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(500).json({
+      message: "Erreur lors de la Verification...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -399,19 +446,27 @@ export const resetPassword = async (req: Request, res: Response) => {
         isError = true;
       }
     );
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Compte Verifié. changer votre mot de passe sur InvestIA.",
-        data: true,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Compte Verifié. changer votre mot de passe sur InvestIA.",
+    //     data: true,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "Compte Verifié. changer votre mot de passe sur InvestIA.",
+      data: true,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(500).json({
-        message: "Erreur lors de la Verification...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(500).json({
+    //     message: "Erreur lors de la Verification...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(500).json({
+      message: "Erreur lors de la Verification...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -454,31 +509,45 @@ export const sendOTP = async (req: Request, res: Response) => {
         isError = true;
       }
     );
+
     // Envoyer l'otp via Email...
     await otp_class.sendOTPViaMail(otp, data.email, true);
     console.log("Email envoyé avec succès...");
 
-    setTimeout(async () => {
-      res.status(201).json({
-        message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
-        data: data,
-        verify: datas?.state == "register",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(201).json({
+    //     message: "Vérifiez votre email pour entrer le code OTP.",
+    //     data: data,
+    //     verify: datas?.state == "register",
+    //   });
+    // }, 1000);
+    res.status(201).json({
+      message: "Vérifiez votre email pour entrer le code OTP.",
+      data: data,
+      verify: datas?.state == "register",
+    });
   } else if (!isError && !dataUser) {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Erreur lors de la recuperation de l'user...",
-        details: "This user do not exists... Retry",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Erreur lors de la recuperation de l'user...",
+    //     details: "This user do not exists... Retry",
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Erreur lors de la recuperation de l'user...",
+      details: "This user do not exists... Retry",
+    });
   } else {
-    setTimeout(async () => {
-      res.status(500).json({
-        message: "Erreur lors du Renvoie d'OTP...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(500).json({
+    //     message: "Erreur lors du Renvoie d'OTP...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(500).json({
+      message: "Erreur lors du Renvoie d'OTP...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -519,20 +588,29 @@ export const resendOTP = async (req: Request, res: Response) => {
     // Envoyer l'otp via Email...
     await otp_class.sendOTPViaMail(otp, data.email);
 
-    setTimeout(async () => {
-      res.status(201).json({
-        message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
-        data: data,
-        verify: datas?.state == "register",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(201).json({
+    //     message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
+    //     data: data,
+    //     verify: datas?.state == "register",
+    //   });
+    // }, 1000);
+    res.status(201).json({
+      message: "Compte créé. Vérifiez votre email pour entrer le code OTP.",
+      data: data,
+      verify: datas?.state == "register",
+    });
   } else {
-    setTimeout(async () => {
-      res.status(500).json({
-        message: "Erreur lors du Renvoie d'OTP...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(500).json({
+    //     message: "Erreur lors du Renvoie d'OTP...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(500).json({
+      message: "Erreur lors du Renvoie d'OTP...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -568,29 +646,43 @@ export const loginUser = async (req: Request, res: Response) => {
       isError = true;
     });
     if (datasOTP && datasOTP.state == "register") {
-      setTimeout(async () => {
-        console.log("user-go-to-verify ==>", data.email);
-        res.status(201).json({
-          message: "user has Connected but verify...",
-          verify: true,
-        });
-      }, 1000);
+      // setTimeout(async () => {
+      //   console.log("user-go-to-verify ==>", data.email);
+      //   res.status(201).json({
+      //     message: "user has Connected but verify...",
+      //     verify: true,
+      //   });
+      // }, 1000);
+      console.log("user-go-to-verify ==>", data.email);
+      res.status(201).json({
+        message: "user has Connected but verify...",
+        verify: true,
+      });
     } else {
-      setTimeout(async () => {
-        console.log("user-signin ==>", data.email);
-        res.status(201).json({
-          message: "user has Connected...",
-          data: datas,
-        });
-      }, 1000);
+      // setTimeout(async () => {
+      //   console.log("user-signin ==>", data.email);
+      //   res.status(201).json({
+      //     message: "user has Connected...",
+      //     data: datas,
+      //   });
+      // }, 1000);
+      console.log("user-signin ==>", data.email);
+      res.status(201).json({
+        message: "user has Connected...",
+        data: datas,
+      });
     }
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Erreur lors de la connexion de l'utilisateur...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Erreur lors de la connexion de l'utilisateur...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Erreur lors de la connexion de l'utilisateur...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -612,21 +704,31 @@ export const logoutUser = async (req: Request, res: Response) => {
   });
 
   if (datas) {
-    setTimeout(async () => {
-      console.log("user-logout ==>", user.email);
-      res.status(201).json({
-        message: "user has been logout...",
-        details: user.email,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   console.log("user-logout ==>", user.email);
+    //   res.status(201).json({
+    //     message: "user has been logout...",
+    //     details: user.email,
+    //   });
+    // }, 1000);
+    console.log("user-logout ==>", user.email);
+    res.status(201).json({
+      message: "user has been logout...",
+      details: user.email,
+    });
   } else {
-    setTimeout(async () => {
-      console.log("user-logout-with-error ==>", user.email);
-      res.status(404).json({
-        message: errorMessage,
-        details: "Error when we try to logout the account.",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   console.log("user-logout-with-error ==>", user.email);
+    //   res.status(404).json({
+    //     message: errorMessage,
+    //     details: "Error when we try to logout the account.",
+    //   });
+    // }, 1000);
+    console.log("user-logout-with-error ==>", user.email);
+    res.status(404).json({
+      message: errorMessage,
+      details: "Error when we try to logout the account.",
+    });
   }
 };
 
@@ -691,19 +793,27 @@ export const updateUserInfos = async (req: Request, res: Response) => {
   console.log("user-data-to-update =>", reqBody);
 
   if (!user) {
-    setTimeout(async () => {
-      res.status(404).send({
-        message: "Erreur lors de la récupération de l'user...",
-        error: "Something Where Wrong...",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).send({
+    //     message: "Erreur lors de la récupération de l'user...",
+    //     error: "Something Where Wrong...",
+    //   });
+    // }, 1000);
+    res.status(404).send({
+      message: "Erreur lors de la récupération de l'user...",
+      error: "Something Where Wrong...",
+    });
   } else if (user.email != reqBody.email) {
-    setTimeout(async () => {
-      res.status(404).send({
-        message: "Erreur lors de la modification d'email...",
-        error: "Not Now wait for it soon.",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).send({
+    //     message: "Erreur lors de la modification d'email...",
+    //     error: "Not Now wait for it soon.",
+    //   });
+    // }, 1000);
+    res.status(404).send({
+      message: "Erreur lors de la modification d'email...",
+      error: "Not Now wait for it soon.",
+    });
   } else {
     let isError: boolean = false;
     let errorMessage: string = "";
@@ -714,20 +824,29 @@ export const updateUserInfos = async (req: Request, res: Response) => {
     });
 
     if (!isError && datas) {
-      setTimeout(() => {
-        res.status(201).json({
-          message: "Account Infos updated...",
-          email: datas.email,
-          data: datas.user_metadata,
-        });
-      }, 1000);
+      // setTimeout(() => {
+      //   res.status(201).json({
+      //     message: "Account Infos updated...",
+      //     email: datas.email,
+      //     data: datas.user_metadata,
+      //   });
+      // }, 1000);
+      res.status(201).json({
+        message: "Account Infos updated...",
+        email: datas.email,
+        data: datas.user_metadata,
+      });
     } else {
-      setTimeout(async () => {
-        res.status(404).send({
-          message: "Erreur lors de la modification d'email...",
-          error: errorMessage,
-        });
-      }, 1000);
+      // setTimeout(async () => {
+      //   res.status(404).send({
+      //     message: "Erreur lors de la modification d'email...",
+      //     error: errorMessage,
+      //   });
+      // }, 1000);
+      res.status(404).send({
+        message: "Erreur lors de la modification d'email...",
+        error: errorMessage,
+      });
     }
   }
 };
@@ -759,19 +878,27 @@ export const changeUserPassword = async (req: Request, res: Response) => {
   console.log("password-to-change =>", { email: user.email, ...reqBody });
 
   if (!user) {
-    setTimeout(async () => {
-      res.status(404).send({
-        message: "Erreur lors de la récupération de l'user...",
-        error: "Something Where Wrong...",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).send({
+    //     message: "Erreur lors de la récupération de l'user...",
+    //     error: "Something Where Wrong...",
+    //   });
+    // }, 1000);
+    res.status(404).send({
+      message: "Erreur lors de la récupération de l'user...",
+      error: "Something Where Wrong...",
+    });
   } else if (user && isError) {
-    setTimeout(async () => {
-      res.status(404).send({
-        message: "Erreur lors de la récupération de l'user...",
-        error: "You didn't enter the correct password",
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).send({
+    //     message: "Erreur lors de la récupération de l'user...",
+    //     error: "You didn't enter the correct password",
+    //   });
+    // }, 1000);
+    res.status(404).send({
+      message: "Erreur lors de la récupération de l'user...",
+      error: "You didn't enter the correct password",
+    });
   } else {
     if (reqBody.new_password === reqBody.confirm_new_password) {
       const user_getted = await model_user.changePassword(
@@ -792,20 +919,29 @@ export const changeUserPassword = async (req: Request, res: Response) => {
           isError = true;
         }
       );
-      setTimeout(async () => {
-        console.log("Password have been changed...");
-        res.status(200).json({
-          message: "Account Infos change password updated...",
-          data: user_getted?.user_metadata,
-        });
-      }, 2000);
+      // setTimeout(async () => {
+      //   console.log("Password have been changed...");
+      //   res.status(200).json({
+      //     message: "Account Infos change password updated...",
+      //     data: user_getted?.user_metadata,
+      //   });
+      // }, 2000);
+      console.log("Password have been changed...");
+      res.status(200).json({
+        message: "Account Infos change password updated...",
+        data: user_getted?.user_metadata,
+      });
     } else {
-      setTimeout(async () => {
-        res.status(403).json({
-          message: "Not corresponding...",
-          error: "Not corresponding.",
-        });
-      }, 3000);
+      // setTimeout(async () => {
+      //   res.status(403).json({
+      //     message: "Not corresponding...",
+      //     error: "Not corresponding.",
+      //   });
+      // }, 3000);
+      res.status(403).json({
+        message: "Not corresponding...",
+        error: "Not corresponding.",
+      });
     }
   }
 };
@@ -817,12 +953,16 @@ export const deleteAccount = async (req: Request, res: Response) => {
   const wallet = new WalletModel();
 
   if (!user) {
-    setTimeout(() => {
-      res.status(500).send({
-        message: "Erreur lors de la récupération de l'user...",
-        error: "Something Where Wrong...",
-      });
-    }, 1000);
+    // setTimeout(() => {
+    //   res.status(500).send({
+    //     message: "Erreur lors de la récupération de l'user...",
+    //     error: "Something Where Wrong...",
+    //   });
+    // }, 1000);
+    res.status(500).send({
+      message: "Erreur lors de la récupération de l'user...",
+      error: "Something Where Wrong...",
+    });
   } else {
     let isError: boolean = false;
     let errorMessage = "";
@@ -842,20 +982,29 @@ export const deleteAccount = async (req: Request, res: Response) => {
       : null;
 
     if (!isError && datas) {
-      setTimeout(() => {
-        res.status(200).json({
-          message: "Account Infos deleted...",
-          email: datas.email,
-          data: datas.user_metadata,
-        });
-      }, 3000);
+      // setTimeout(() => {
+      //   res.status(200).json({
+      //     message: "Account Infos deleted...",
+      //     email: datas.email,
+      //     data: datas.user_metadata,
+      //   });
+      // }, 3000);
+      res.status(200).json({
+        message: "Account Infos deleted...",
+        email: datas.email,
+        data: datas.user_metadata,
+      });
     } else {
-      setTimeout(() => {
-        res.status(404).json({
-          message: "Error when delete user...",
-          error: errorMessage,
-        });
-      }, 3000);
+      // setTimeout(() => {
+      //   res.status(404).json({
+      //     message: "Error when delete user...",
+      //     error: errorMessage,
+      //   });
+      // }, 3000);
+      res.status(404).json({
+        message: "Error when delete user...",
+        error: errorMessage,
+      });
     }
   }
 };

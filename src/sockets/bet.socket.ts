@@ -2,7 +2,6 @@ import { BetModel } from "../models/bet.model";
 import { BetInterfaceModel } from "../types/bet.type";
 import { UserBetModel } from "../models/user-bet.model";
 
-
 // Ceci permet de recuperer tout les matches active et les de les controler
 export const betChecker = async () => {
   const betModel = new BetModel();
@@ -28,22 +27,27 @@ export const betChecker = async () => {
   }
 
   // ceci sert à finir avec les paris à cloturer
-  betsListEnded.forEach(async (bet) => {
-    await betModel.update(
-      { ...bet, isEnded: true, isActive: false },
-      (error) => {
-        isUpdateBetError = true;
-        console.log("bets-ending-error =>", error?.message);
-      }
+  try {
+    await Promise.all(
+      betsListEnded.map((bet) =>
+        betModel.update({ ...bet, isEnded: true, isActive: false }, (error) => {
+          if (error) {
+            console.log("bets-ending-error =>", error.message);
+            throw error;
+          }
+        })
+      )
     );
-  });
+  } catch (error) {
+    isUpdateBetError = true;
+  }
 
   const usersBets =
-    betsList &&
-    !isUpdateBetError &&
-    (await userBetModel.getBetsByIdListMatch(betsList, (error) => {
-      console.log("bets-instance-getting-error =>", error?.message);
-    }));
+    betsList.length && !isUpdateBetError
+      ? await userBetModel.getBetsByIdListMatch(betsList, (error) => {
+          console.log("bets-instance-getting-error =>", error?.message);
+        })
+      : null;
 
   if (usersBets && usersBets.length) {
     for (let i = 0; i < usersBets.length; i++) {
