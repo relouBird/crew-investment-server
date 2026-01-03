@@ -62,27 +62,39 @@ export const getAccountDetails = async (req: Request, res: Response) => {
         deposit != 0 ? ((datas.funds + withdraw - deposit) / deposit) * 100 : 0;
 
       // Send...
-      setTimeout(async () => {
-        res.status(200).json({
-          message: "User wallet getted...",
-          data: { ...datas, growth, total_wins: 0 },
-        });
-      }, 1000);
+      // setTimeout(async () => {
+      //   res.status(200).json({
+      //     message: "User wallet getted...",
+      //     data: { ...datas, growth, total_wins: 0 },
+      //   });
+      // }, 1000);
+      res.status(200).json({
+        message: "User wallet getted...",
+        data: { ...datas, growth, total_wins: 0 },
+      });
     } else {
-      setTimeout(async () => {
-        res.status(404).json({
-          message: "Not Transactions Found...",
-          data: errorMessage,
-        });
-      }, 1000);
-    }
-  } else {
-    setTimeout(async () => {
+      // setTimeout(async () => {
+      //   res.status(404).json({
+      //     message: "Not Transactions Found...",
+      //     data: errorMessage,
+      //   });
+      // }, 1000);
       res.status(404).json({
-        message: "Not Wallet Found...",
+        message: "Not Transactions Found...",
         data: errorMessage,
       });
-    }, 1000);
+    }
+  } else {
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Not Wallet Found...",
+    //     data: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Not Wallet Found...",
+      data: errorMessage,
+    });
   }
 };
 
@@ -99,19 +111,27 @@ export const allWallets = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Transaction Checked...",
-        data,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Transaction Checked...",
+    //     data,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "Transaction Checked...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Transaction To Check Found...",
-        data: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Transaction To Check Found...",
+    //     data: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Transaction To Check Found...",
+      data: errorMessage,
+    });
   }
 };
 
@@ -199,30 +219,48 @@ export const refillAccount = async (req: Request, res: Response) => {
         }
       ));
 
-    dataRefill
-      ? setTimeout(async () => {
-          res.status(200).json({
-            message: "Transaction Initialized...",
-            data: {
-              ...reqBody,
-              transaction_id: transaction_init?.transaction_id,
-              transaction_details: dataRefill?.transaction,
-            },
-          });
-        }, 2000)
-      : setTimeout(async () => {
-          res.status(403).json({
-            message: "Not Found...",
-            details: "Something where wrongs when launched...",
-          });
-        }, 1000);
-  } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Transaction To Initialize Found...",
-        details: errorMessage,
+    if (dataRefill) {
+      // setTimeout(async () => {
+      //   res.status(200).json({
+      //     message: "Transaction Initialized...",
+      //     data: {
+      //       ...reqBody,
+      //       transaction_id: transaction_init?.transaction_id,
+      //       transaction_details: dataRefill?.transaction,
+      //     },
+      //   });
+      // }, 2000);
+      res.status(200).json({
+        message: "Transaction Initialized...",
+        data: {
+          ...reqBody,
+          transaction_id: transaction_init?.transaction_id,
+          transaction_details: dataRefill?.transaction,
+        },
       });
-    }, 1000);
+    } else {
+      // setTimeout(async () => {
+      //   res.status(403).json({
+      //     message: "Not Found...",
+      //     details: "Something where wrongs when launched...",
+      //   });
+      // }, 1000);
+      res.status(403).json({
+        message: "Not Found...",
+        details: "Something where wrongs when launched...",
+      });
+    }
+  } else {
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Transaction To Initialize Found...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Transaction To Initialize Found...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -324,41 +362,63 @@ export const withdrawalAccount = async (req: Request, res: Response) => {
         }
       ));
 
-    dataWithdraw
-      ? setTimeout(async () => {
-          //  SI LA TRANSACTION REUSSIE
-          res.status(200).json({
-            message: "WithDraw Transaction Initialized...",
-            data: {
-              ...reqBody,
-              transaction_id: transaction_init?.transaction_id,
-              transaction_details: dataWithdraw?.transfer,
-            },
-          });
-        }, 2000)
-      : setTimeout(async () => {
-          // SI LA TRANSACTION AU NIVEAU DE NOTCHPAY A ECHOUE
-          res.status(403).json({
-            message: "Not Found...",
-            details: "Something where wrongs when launched...",
-          });
-        }, 1000);
-  } else if (!isError && reqBody && data && reqBody.amount > data.funds) {
-    setTimeout(async () => {
-      // SI LES FONDS SONT INSUFFISANTS
-      res.status(402).json({
+    if (dataWithdraw) {
+      //   //  SI LA TRANSACTION REUSSIE
+      // setTimeout(async () => {
+      //   res.status(200).json({
+      //     message: "WithDraw Transaction Initialized...",
+      //     data: {
+      //       ...reqBody,
+      //       transaction_id: transaction_init?.transaction_id,
+      //       transaction_details: dataWithdraw?.transfer,
+      //     },
+      //   });
+      // }, 2000);
+      res.status(200).json({
+        message: "WithDraw Transaction Initialized...",
+        data: {
+          ...reqBody,
+          transaction_id: transaction_init?.transaction_id,
+          transaction_details: dataWithdraw?.transfer,
+        },
+      });
+    } else {
+      // // SI LA TRANSACTION AU NIVEAU DE NOTCHPAY A ECHOUE
+      // setTimeout(async () => {
+      //   res.status(403).json({
+      //     message: "Not Found...",
+      //     details: "Something where wrongs when launched...",
+      //   });
+      // }, 1000);
+      res.status(403).json({
         message: "Not Found...",
-        details: "You've insufficient balance funds...",
+        details: "Something where wrongs when launched...",
       });
-    }, 1000);
+    }
+  } else if (!isError && reqBody && data && reqBody.amount > data.funds) {
+    //   // SI LES FONDS SONT INSUFFISANTS
+    // setTimeout(async () => {
+    //   res.status(402).json({
+    //     message: "Not Found...",
+    //     details: "You've insufficient balance funds...",
+    //   });
+    // }, 1000);
+    res.status(402).json({
+      message: "Not Found...",
+      details: "You've insufficient balance funds...",
+    });
   } else {
-    setTimeout(async () => {
-      // ERREUR DONT ON ARRIVE PAS A GERER
-      res.status(404).json({
-        message: "No Transaction To Initialize Found...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // // ERREUR DONT ON ARRIVE PAS A GERER
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Transaction To Initialize Found...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Transaction To Initialize Found...",
+      details: errorMessage,
+    });
   }
 };
 

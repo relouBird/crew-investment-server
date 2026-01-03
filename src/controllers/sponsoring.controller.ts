@@ -43,19 +43,27 @@ export const all = async (req: Request, res: Response) => {
   }
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Sponsoring Checked...",
-        data: filterSponsoringData(data, usersData),
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Sponsoring Checked...",
+    //     data: filterSponsoringData(data, usersData),
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "Sponsoring Checked...",
+      data: filterSponsoringData(data, usersData),
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Bets To Check Found...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Bets To Check Found...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Bets To Check Found...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -73,19 +81,27 @@ export const create = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Sponsoring Data Created...",
-        data,
-      });
-    }, 2000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Sponsoring Data Created...",
+    //     data,
+    //   });
+    // }, 2000);
+    res.status(200).json({
+      message: "Sponsoring Data Created...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Something where wrong when creating sponsor-data...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Something where wrong when creating sponsor-data...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Something where wrong when creating sponsor-data...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -114,22 +130,33 @@ export const get = async (req: Request, res: Response) => {
     }));
 
   if (!isError && data && user) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Bets getted successfully...",
-        data: {
-          ...data,
-          user,
-        },
-      });
-    }, 2000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Bets getted successfully...",
+    //     data: {
+    //       ...data,
+    //       user,
+    //     },
+    //   });
+    // }, 2000);
+    res.status(200).json({
+      message: "Bets getted successfully...",
+      data: {
+        ...data,
+        user,
+      },
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Error when deleting bet...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Error when deleting bet...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Error when deleting bet...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -149,19 +176,27 @@ export const DeleteSponsoring = async (req: Request, res: Response) => {
   });
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Sponsoring deleted successfully...",
-        data,
-      });
-    }, 2000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Sponsoring deleted successfully...",
+    //     data,
+    //   });
+    // }, 2000);
+    res.status(200).json({
+      message: "Sponsoring deleted successfully...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Error when deleting sponsoring...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Error when deleting sponsoring...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Error when deleting sponsoring...",
+      details: errorMessage,
+    });
   }
 };
 
@@ -185,18 +220,26 @@ export const update = async (req: Request, res: Response) => {
   );
 
   if (!isError && data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Sponsoring Updated successfully...",
-        data,
-      });
-    }, 2000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Sponsoring Updated successfully...",
+    //     data,
+    //   });
+    // }, 2000);
+    res.status(200).json({
+      message: "Sponsoring Updated successfully...",
+      data,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "Error when updating sponsoring...",
-        details: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "Error when updating sponsoring...",
+    //     details: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "Error when updating sponsoring...",
+      details: errorMessage,
+    });
   }
 };

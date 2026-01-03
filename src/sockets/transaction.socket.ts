@@ -20,84 +20,76 @@ export const usersBetChecker = async () => {
   betsList = userBets ? userBets.map((bet) => String(bet.id)) : [];
 
   if (betsList.length && userBets?.length && !isError) {
-    userBets.forEach(async (gettedBet) => {
-      let isErrorDetails = false;
 
-      // Premier étape on cree la transaction...
-      const res = await transactionModel.create(
-        {
-          creator_id: gettedBet.uid,
-          amount: gettedBet.win
-            ? gettedBet.potentialGain
-            : gettedBet.potentialLoss,
-          type: gettedBet.win ? TRANSACTION_TYPE.GAIN : TRANSACTION_TYPE.LOSS,
-          status: STATUS_TYPE.DONE,
-          description: gettedBet.win
-            ? `Gain - ${gettedBet.prediction}`
-            : `Perte - ${gettedBet.prediction}`,
-        },
-        (error) => {
-          console.log("users-transactions-creating-error =>", error?.message);
-          errorList.push(error?.details ?? error?.message ?? "");
-          isErrorDetails = true;
-        }
-      );
+    for (const bet of userBets) {
+      try {
+        // 1️⃣ Premier étape on cree la transaction...
+        const res = await transactionModel.create(
+          {
+            creator_id: bet.uid,
+            amount: bet.win ? bet.potentialGain : bet.potentialLoss,
+            type: bet.win ? TRANSACTION_TYPE.GAIN : TRANSACTION_TYPE.LOSS,
+            status: STATUS_TYPE.DONE,
+            description: bet.win
+              ? `Gain - ${bet.prediction}`
+              : `Perte - ${bet.prediction}`,
+          },
+          (error) => {
+            console.log("users-transactions-creating-error =>", error?.message);
+            errorList.push(error?.details ?? error?.message ?? "");
+          }
+        );
 
-      // Seconde étape on recuperer le porte-feuille de l'utilisateur...
-      const userWallet =
-        !isErrorDetails &&
-        (await walletModel.getByUid(gettedBet.uid, (error) => {
+        if (res == null) continue;
+
+        // 2️⃣ Seconde étape on recuperer le porte-feuille de l'utilisateur...
+        let userWallet = await walletModel.getByUid(bet.uid, (error) => {
           console.log("users-wallet-getting-error =>", error?.message);
           errorList.push(error?.details ?? error?.message ?? "");
-          isErrorDetails = true;
-        }));
+        });
 
-      // Troisième étape... on met à jour le porte-feuille de l'utilisateur...
-      !isErrorDetails &&
-        userWallet &&
-        walletModel.update(
+        if (userWallet == null) continue;
+
+        // 3️⃣ Troisième étape... on met à jour le porte-feuille de l'utilisateur...
+        userWallet = await walletModel.update(
           {
             ...userWallet,
-            funds: gettedBet.win
-              ? userWallet.funds + gettedBet.potentialGain
-              : userWallet.funds - gettedBet.potentialLoss,
+            funds: bet.win
+              ? userWallet.funds + bet.potentialGain
+              : userWallet.funds - bet.potentialLoss,
           },
           (error) => {
             console.log("users-wallet-updating-error =>", error?.message);
             errorList.push(error?.details ?? error?.message ?? "");
-            isErrorDetails = true;
           }
         );
 
-      let isDeleted: boolean = false;
-      // Derniere étape on desactive le parie
-      userBetModel.update({ ...gettedBet, isPayed: true }, (error) => {
-        console.log("users-bets-updating-error =>", error?.message);
-        errorList.push(error?.details ?? error?.message ?? "");
-        isErrorDetails = true;
-        isDeleted = true;
-      });
+        if (userWallet == null) continue;
 
-      if (isDeleted) {
-        !isErrorDetails &&
-          userWallet &&
-          walletModel.update(
+        // 4️⃣ Derniere étape on desactive le parie
+        await userBetModel.update({ ...bet, isPayed: true }, (error) => {
+          console.log("users-bets-updating-error =>", error?.message);
+          errorList.push(error?.details ?? error?.message ?? "");
+          errorList.push("true");
+        });
+
+        if (errorList.includes("true")) {
+          //  5eme  étape... on met à jour le porte-feuille de l'utilisateur...
+          userWallet = await walletModel.update(
             {
               ...userWallet,
-              funds: gettedBet.win
-                ? userWallet.funds - gettedBet.potentialGain
-                : userWallet.funds + gettedBet.potentialLoss,
+              funds: bet.win
+                ? userWallet.funds - bet.potentialGain
+                : userWallet.funds + bet.potentialLoss,
             },
             (error) => {
               console.log("users-wallet-updating-error =>", error?.message);
-              errorList.push(error?.details ?? error?.message ?? "");
-              isErrorDetails = true;
             }
           );
-
-        await transactionModel.delete(String(res?.id));
-      }
-    });
+          await transactionModel.delete(String(res?.id));
+        }
+      } catch (error) {}
+    }
   }
 
   if (errorList.length) {

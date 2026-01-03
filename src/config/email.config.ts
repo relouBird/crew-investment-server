@@ -7,15 +7,27 @@ export const transporter = createTransport({
   port: Number(process.env.SMTP_PORT),
 });
 
-// Prototype qui gere avec GMAIL....
+// // Prototype qui gere avec GMAIL....
+// //---------------------------------
+// export const gmail_transporter = createTransport({
+//   host: 'smtp.gmail.com',
+//   port: 465,
+//   secure: true,
+//   auth: {
+//     user: process.env.GMAIL_SMTP_APP_USER,
+//     pass: process.env.GMAIL_SMTP_APP_KEY,
+//   },
+// });
+
+// Prototype qui gere avec MON SERVER....
 //---------------------------------
-export const gmail_transporter = createTransport({
-  host: 'smtp.gmail.com',
+export const hoster_transporter = createTransport({
+  host: 'mailer.mon-ndem.com',
   port: 465,
   secure: true,
   auth: {
-    user: process.env.GMAIL_SMTP_APP_USER,
-    pass: process.env.GMAIL_SMTP_APP_KEY,
+    user: process.env.PLANET_HOSTER_SMTP_APP_USER,
+    pass: process.env.PLANET_HOSTER_SMTP_APP_KEY,
   },
 });
 

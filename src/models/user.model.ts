@@ -38,28 +38,29 @@ export class UserModel {
   /*
   Lire la documentation sur la classe de la base données User
   */
-  async getAllByList(
-    idList: string[],
-    errorHandler?: AuthErrorHandler
-  ): Promise<null | User[]> {
-    let isError: boolean = false;
-    const datas: User[] = [];
+async getAllByList(
+  idList: string[],
+  errorHandler?: AuthErrorHandler
+): Promise<User[] | null> {
 
-    idList.forEach(async (user_id) => {
-      const data = await this.user.getUserAsAdmin(user_id, (error) => {
-        errorHandler && errorHandler(error);
-        isError = true;
-        console.log(`${this.name}-error => ${error}`);
-      });
+  try {
+    const datas = await Promise.all(
+      idList.map(async (user_id) => {
+        return await this.user.getUserAsAdmin(user_id, (error) => {
+          errorHandler?.(error);
+          throw error;
+        });
+      })
+    );
 
-      data && datas.push(data);
-    });
+    return datas.filter(Boolean) as User[];
 
-    if (isError) {
-      return null;
-    }
-    return datas;
+  } catch (error) {
+    console.error(`${this.name}-error =>`, error);
+    return null;
   }
+}
+
 
   /*
   Lire la documentation sur la classe de la base données User

@@ -21,12 +21,16 @@ export const allTransactions = async (req: Request, res: Response) => {
 
   if (!isError && data) {
     if (user.user_metadata.type == USER_TYPE.ADMIN) {
-      setTimeout(async () => {
-        res.status(200).json({
-          message: "Transaction Checked...",
-          data,
-        });
-      }, 1000);
+      // setTimeout(async () => {
+      //   res.status(200).json({
+      //     message: "Transaction Checked...",
+      //     data,
+      //   });
+      // }, 1000);
+      res.status(200).json({
+        message: "Transaction Checked...",
+        data,
+      });
     } else {
       let userTransactionsData: UserWalletTransaction[] = [];
       data.forEach((trans) => {
@@ -35,20 +39,28 @@ export const allTransactions = async (req: Request, res: Response) => {
         }
       });
 
-      setTimeout(async () => {
-        res.status(200).json({
-          message: "Transaction Checked...",
-          data: userTransactionsData,
-        });
-      }, 1000);
+      // setTimeout(async () => {
+      //   res.status(200).json({
+      //     message: "Transaction Checked...",
+      //     data: userTransactionsData,
+      //   });
+      // }, 1000);
+      res.status(200).json({
+        message: "Transaction Checked...",
+        data: userTransactionsData,
+      });
     }
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Transaction To Check Found...",
-        data: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Transaction To Check Found...",
+    //     data: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Transaction To Check Found...",
+      data: errorMessage,
+    });
   }
 };
 
@@ -99,20 +111,29 @@ export const checkTransactionState = async (req: Request, res: Response) => {
   }
 
   if (!isError && transaction_id && transaction_to_check && wallet_data) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Transaction Checked...",
-        wallet: wallet_data,
-        transaction: transaction_to_check,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Transaction Checked...",
+    //     wallet: wallet_data,
+    //     transaction: transaction_to_check,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "Transaction Checked...",
+      wallet: wallet_data,
+      transaction: transaction_to_check,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Transaction To Check Found...",
-        data: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Transaction To Check Found...",
+    //     data: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Transaction To Check Found...",
+      data: errorMessage,
+    });
   }
 };
 
@@ -186,19 +207,27 @@ export const checkPaymentState = async (req: Request, res: Response) => {
   }
 
   if (!isError && data && transactionState) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Transaction Checked...",
-        data: transactionState,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Transaction Checked...",
+    //     data: transactionState,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "Transaction Checked...",
+      data: transactionState,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Transaction To Check Found Test...",
-        data: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Transaction To Check Found Test...",
+    //     data: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Transaction To Check Found Test...",
+      data: errorMessage,
+    });
   }
 };
 
@@ -275,18 +304,26 @@ export const checkWithdrawState = async (req: Request, res: Response) => {
   }
 
   if (!isError && data && transactionState) {
-    setTimeout(async () => {
-      res.status(200).json({
-        message: "Transfers Checked...",
-        data: transactionState,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(200).json({
+    //     message: "Transfers Checked...",
+    //     data: transactionState,
+    //   });
+    // }, 1000);
+    res.status(200).json({
+      message: "Transfers Checked...",
+      data: transactionState,
+    });
   } else {
-    setTimeout(async () => {
-      res.status(404).json({
-        message: "No Transfers To Check Found Test...",
-        data: errorMessage,
-      });
-    }, 1000);
+    // setTimeout(async () => {
+    //   res.status(404).json({
+    //     message: "No Transfers To Check Found Test...",
+    //     data: errorMessage,
+    //   });
+    // }, 1000);
+    res.status(404).json({
+      message: "No Transfers To Check Found Test...",
+      data: errorMessage,
+    });
   }
 };
