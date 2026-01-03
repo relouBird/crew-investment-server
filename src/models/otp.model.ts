@@ -104,7 +104,14 @@ export class OTPModel {
         from: `"RSG Investia, Supports" <${process.env.PLANET_HOSTER_SMTP_APP_USER}>`,
         to: email,
         subject: "Code de vérification",
-        html: GenerateEmail(otp, reset ?? false, true),
+        html: GenerateEmail(otp, reset ?? false),
+        attachments: [
+          {
+            filename: "logo.png",
+            path: "https://eujifnxcmbciiliwpmrv.supabase.co/storage/v1/object/public/public_rsg_investia/favicon.ico",
+            cid: "logo-investia",
+          },
+        ],
       });
     } catch (error) {
       console.error("Erreur:", error);

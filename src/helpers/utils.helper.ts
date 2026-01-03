@@ -2,7 +2,7 @@ export function generateOTP(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-export function GenerateEmail(otp: string, reset: boolean, isOnline?: boolean) {
+export function GenerateEmail(otp: string, reset: boolean) {
   return `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -247,7 +247,7 @@ export function GenerateEmail(otp: string, reset: boolean, isOnline?: boolean) {
         <!-- Header -->
         <div class="email-header">
             <div class="logo">
-                <img src="${isOnline ? "https://anoybggdqpxdfcfhxfsg.supabase.co/storage/v1/object/public/investia//logo.png" : "http://127.0.0.1:54321/storage/v1/object/public/investia//logo.png"}" alt="Logo">
+                <img src="logo-investia" alt="Logo">
             </div>
             <h1>Code de vérification</h1>
             <p>Authentification sécurisée</p>
@@ -509,7 +509,7 @@ export function GenerateThanksEmail(
         <!-- Header -->
         <div class="email-header">
             <div class="logo">
-                <img src="${isOnline ? "https://anoybggdqpxdfcfhxfsg.supabase.co/storage/v1/object/public/investia//logo.png" : "http://127.0.0.1:54321/storage/v1/object/public/investia//logo.png"}" alt="Logo">
+                <img src="logo-investia" alt="Logo">
             </div>
             <h1>Recharge Effectué</h1>
             <p>TR-ID-${transaction_id}</p>
@@ -748,7 +748,7 @@ export function GenerateFailEmail(
         <!-- Header -->
         <div class="email-header">
             <div class="logo">
-                <img src="${isOnline ? "https://anoybggdqpxdfcfhxfsg.supabase.co/storage/v1/object/public/investia//logo.png" : "http://127.0.0.1:54321/storage/v1/object/public/investia//logo.png"}" alt="Logo">
+                <img src="logo-investia" alt="Logo">
             </div>
             <h1>Echec Recharge</h1>
             <p>TR-ID-${transaction_id}</p>
